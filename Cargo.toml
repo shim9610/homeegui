@@ -1,0 +1,8 @@
+[package]
+name = "homeegui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+Rusty_egui = {git = "ssh://git@github.com/shim9610/Rusty_egui.git", branch = "main", package = "Rusty_egui" }
+env_logger = "0.11.6"

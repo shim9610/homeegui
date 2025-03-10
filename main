@@ -1,0 +1,55 @@
+use Rusty_egui::{App, Context, Frame};
+
+
+fn main() -> Result<(), eframe::Error> {
+    // 로거 설정 (선택 사항)
+    env_logger::init();
+
+    // 네이티브 옵션 설정
+    let options = eframe::NativeOptions {
+        initial_window_size: Some(egui::vec2(800.0, 600.0)),
+        min_window_size: Some(egui::vec2(400.0, 300.0)),
+        centered: true,
+        ..Default::default()
+    };
+
+    // 애플리케이션 실행
+    eframe::run_native(
+        "내 첫 번째 egui 앱",
+        options,
+        Box::new(|cc| Box::new(MyApp::new(cc))),
+    )
+}
+
+// 애플리케이션 상태를 저장할 구조체
+struct MyApp {
+    name: String,
+}
+
+impl MyApp {
+    // 생성자
+    fn new(_cc: &CreationContext) -> Self {
+        Self {
+            name: "World".to_string(),
+        }
+    }
+}
+
+// 애플리케이션 업데이트 구현
+impl App for MyApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        // 중앙 패널 생성
+        egui::CentralPanel::default().show(ctx, |ui| {
+            ui.heading("Hello egui!");
+            ui.horizontal(|ui| {
+                ui.label("이름: ");
+                ui.text_edit_singleline(&mut self.name);
+            });
+            ui.label(format!("안녕하세요, {}님!", self.name));
+            
+            if ui.button("Click me!").clicked() {
+                println!("버튼이 클릭되었습니다!");
+            }
+        });
+    }
+}
