@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        // 디버그 설정 이름
+        "name": "Debug Rust",
+        // lldb 사용
+        "type": "lldb",
+        // 디버그 실행 모드
+        "request": "launch",
+        // 실제로 디버깅할 프로그램의 경로 (빌드 후 생기는 실행 파일)
+        "program": "${workspaceFolder}/target/debug/homeegui",
+  
+        // 빌드된 실행 파일을 실행할 때의 현재 디렉토리
+        "cwd": "${workspaceFolder}",
+  
+        // 디버깅 실행 전에 cargo build를 자동으로 수행하게끔 설정 (선택)
+        "preLaunchTask": "cargo build",
+  
+        // 실행 시 전달할 인자 (있다면 배열 형태로)
+        "args": []
+      }
+    ]
+  }
+  
