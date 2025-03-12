@@ -1,12 +1,10 @@
-use Rusty_egui::egui::{ Context, Frame};
+#![allow(non_snake_case)] // 파일 최상단
 use Rusty_egui::eframe;
 use Rusty_egui::egui;
-use Rusty_egui::eframe::{App, CreationContext};
-use Rusty_egui::{replace_fonts};
-use Rusty_egui::fix_vul_lib;
 mod ui_styles;
 mod app;
-use app::MyApp;
+mod login;
+mod dashboard;
 
 
 
