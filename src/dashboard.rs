@@ -13,7 +13,9 @@ use tiny_skia;
 const LOCK_ICON: &[u8] = include_bytes!("icon/lock.svg");
 const SETTINGS_ICON: &[u8] = include_bytes!("icon/setting.svg");
 const PLAY_ICON: &[u8] = include_bytes!("icon/Play Arrow.svg");
-const BACK_ICON: &[u8] = include_bytes!("icon/Forward.svg");
+const BACK_ICON: &[u8] = include_bytes!("icon/back.svg");
+const FORWARD_ICON: &[u8] = include_bytes!("icon/Forward.svg");
+
 
 fn load_svg_icon(ctx: &egui::Context, svg_bytes: &[u8]) -> egui::TextureHandle {
     // SVG를 ColorImage로 변환
@@ -26,7 +28,7 @@ fn load_svg_icon(ctx: &egui::Context, svg_bytes: &[u8]) -> egui::TextureHandle {
         egui::TextureOptions::default()
     )
 }
-fn debug_save_color_image_as_png(color_image: &ColorImage, path: &str) {
+fn _debug_save_color_image_as_png(color_image: &ColorImage, path: &str) {
     let width = color_image.width();
     let height = color_image.height();
 
@@ -49,7 +51,6 @@ fn debug_save_color_image_as_png(color_image: &ColorImage, path: &str) {
 fn load_svg_as_color_image(svg_bytes: &[u8]) -> egui::ColorImage {
     use usvg::{Tree, Options};
     use resvg;
-    use tiny_skia::{Pixmap, Transform};
 
     let options = Options::default();
     let rtree = Tree::from_data(svg_bytes, &options).expect("SVG 파싱 실패");
@@ -79,6 +80,15 @@ struct AreaStructure {
     right_bottom: UiBuilder,
     bottom_layer: UiBuilder,
 }
+
+#[derive(PartialEq, Clone, Copy)]
+enum LeftTabState {
+    Files,
+    Favorites,
+    Recent,
+    None,
+}
+
 impl AreaStructure {
     pub fn new() -> Self {
         Self {
@@ -91,11 +101,17 @@ impl AreaStructure {
             bottom_layer: UiBuilder::default(),
         }
     }
-    pub fn _initialize(&mut self, window_rect: Rect) {
+    pub fn _initialize(&mut self, window_rect_no_margin: Rect) {
+
+        let margin:f32 = 10.0;
+        let  window_rect = Rect::from_min_size(
+            egui::pos2(window_rect_no_margin.min.x + margin, window_rect_no_margin.min.y + margin),
+            egui::vec2(window_rect_no_margin.width() - margin , window_rect_no_margin.height() - margin )
+        );
         // 비율 상수들
         let top_layer_ratio = 0.15;      // 상단 영역 높이 비율
         let bottom_layer_ratio = 0.1;   // 하단 영역 높이 비율
-        let left_side_ratio = 0.3;      // 좌측 영역 너비 비율
+        let left_side_ratio = 0.2;      // 좌측 영역 너비 비율
         
         let left_top_ratio = 0.5;       // 좌측 상단 높이 비율 (좌측 영역 내에서)
         let left_bottom_ratio = 0.5;    // 좌측 하단 높이 비율
@@ -175,19 +191,18 @@ pub struct MainPage {
     settings_icon: egui::TextureHandle,
     back_icon: egui::TextureHandle,
     play_icon: egui::TextureHandle,
+    forward_icon: egui::TextureHandle,
+    current_left_tab: LeftTabState,
 }
 impl MainPage {
     pub fn new(ctx: &egui::Context, name: &str) -> Self {
         // SVG 아이콘 로딩
         let lock_icon = load_svg_icon(ctx, LOCK_ICON);
-        println!("텍스처 로딩 결과: {:?}", lock_icon.id());
         let settings_icon = load_svg_icon(ctx, SETTINGS_ICON);
-        println!("텍스처 로딩 결과: {:?}", settings_icon.id());
         let play_icon = load_svg_icon(ctx, PLAY_ICON);
-        println!("텍스처 로딩 결과: {:?}", play_icon.id());
         let back_icon = load_svg_icon(ctx, BACK_ICON);
-        println!("텍스처 로딩 결과: {:?}", back_icon.id());
-
+        let forward_icon = load_svg_icon(ctx, FORWARD_ICON);
+        let current_left_tab = LeftTabState::None;
         
         Self {
             _name: name.to_string(),
@@ -197,17 +212,25 @@ impl MainPage {
             settings_icon,
             play_icon,
             back_icon,
+            forward_icon,
+            current_left_tab,
            
         }
     }
-    fn render_top_layer(&mut self, ui: &mut egui::Ui) {
+    fn render_top_layer(&mut self, ui: &mut egui::Ui,returnV:&mut PageState) {
+        *returnV=PageState::MAIN;
         ui.horizontal(|ui| {
             // 왼쪽 영역: 뒤로가기/앞으로가기 버튼
-            let button = egui::ImageButton::new(
-                egui::load::SizedTexture::new(self.back_icon.id(), egui::vec2(30.0, 30.0))
+            let back_button = egui::ImageButton::new(
+                egui::load::SizedTexture::new(self.back_icon.id(), egui::vec2(20.0, 20.0))
             ).frame(true);  // 프레임(배경) 추가
-            
-            if ui.add(button).clicked() {
+            if ui.add(back_button).clicked() {
+                // 뒤로가기 기능
+            }
+            let forward_button = egui::ImageButton::new(
+                egui::load::SizedTexture::new(self.forward_icon.id(), egui::vec2(20.0, 20.0))
+            ).frame(true);  // 프레임(배경) 추가
+            if ui.add(forward_button).clicked() {
                 // 뒤로가기 기능
             }
             
@@ -218,34 +241,69 @@ impl MainPage {
             
             // 오른쪽 영역: 아이콘들
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.add(egui::Button::image(
-                egui::Image::from_texture(egui::load::SizedTexture::new(self.settings_icon.id(),
-                    egui::vec2(20.0, 20.0)))
-                )).clicked() {
+            
+
+                let lock_button = egui::ImageButton::new(
+                    egui::load::SizedTexture::new(self.lock_icon.id(), egui::vec2(20.0, 20.0))
+                ).frame(true);  // 프레임(배경) 추가
+                if ui.add(lock_button).clicked() {
+                    *returnV=PageState::LOGIN;
+                    //잠금 기능
+                }
+                let settings_button = egui::ImageButton::new(
+                    egui::load::SizedTexture::new(self.settings_icon.id(), egui::vec2(20.0, 20.0))
+                ).frame(true);  // 프레임(배경) 추가
+                if ui.add(settings_button).clicked() {
                     // 설정 기능
                 }
-                
-                if ui.add(egui::Button::image(
-                egui::Image::from_texture(egui::load::SizedTexture::new(self.lock_icon.id(),
-                    egui::vec2(20.0, 20.0)))
-                )).clicked() {
-                    // 잠금 기능
-                }
-                
-                if ui.add(egui::Button::image(
-                egui::Image::from_texture(egui::load::SizedTexture::new(self.play_icon.id(),
-                    egui::vec2(20.0, 20.0)))
-                )).clicked() {
-                    // 재생 기능
-                }
+
             });
         });
     }
 
     fn render_left_top(&mut self, ui: &mut egui::Ui) {
-        // 좌측 상단 UI 코드
-        ui.label("좌측 상단");
+        ui.vertical(|ui| {
+            ui.heading("탐색기");
+            ui.separator();
+            
+            // 탭 버튼 UI
+            ui.horizontal(|ui| {
+                if ui.selectable_label(self.current_left_tab == LeftTabState::Files, "파일").clicked() {
+                    self.current_left_tab = LeftTabState::Files;
+                }
+                
+                if ui.selectable_label(self.current_left_tab == LeftTabState::Favorites, "즐겨찾기").clicked() {
+                    self.current_left_tab = LeftTabState::Favorites;
+                }
+                
+                if ui.selectable_label(self.current_left_tab == LeftTabState::Recent, "최근").clicked() {
+                    self.current_left_tab = LeftTabState::Recent;
+                }
+            });
+            
+            ui.separator();
+            
+            // 현재 선택된 탭 내용 표시
+            match self.current_left_tab {
+                LeftTabState::Files => {
+                    ui.label("파일 목록");
+                    // 파일 목록 UI 구현
+                },
+                LeftTabState::Favorites => {
+                    ui.label("즐겨찾기 목록");
+                    // 즐겨찾기 목록 UI 구현
+                },
+                LeftTabState::Recent => {
+                    ui.label("최근 파일 목록");
+                    // 최근 파일 목록 UI 구현
+                },
+                LeftTabState::None => {
+                    print!("init");
+                }
+            }
+        });
     }
+    
     
     fn render_left_bottom(&mut self, ui: &mut egui::Ui) {
         // 좌측 하단 UI 코드
@@ -258,44 +316,7 @@ impl MainPage {
     }
     
     fn render_right_top(&mut self, ui: &mut egui::Ui) {
-        ui.horizontal(|ui| {
-            // 왼쪽 영역: 뒤로가기/앞으로가기 버튼
-            if ui.add(egui::Button::image(
-                egui::Image::from_texture(egui::load::SizedTexture::new(self.back_icon.id(),
-                egui::vec2(100.0, 100.0)))
-            )).clicked() {
-                // 뒤로가기 기능
-            }
-            
-            // 중앙 영역: 앱 제목
-            ui.with_layout(egui::Layout::centered_and_justified(egui::Direction::LeftToRight), |ui| {
-                ui.heading("File Store");
-            });
-            
-            // 오른쪽 영역: 아이콘들
-            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if ui.add(egui::Button::image(
-                egui::Image::from_texture(egui::load::SizedTexture::new(self.settings_icon.id(),
-                    egui::vec2(20.0, 20.0)))
-                )).clicked() {
-                    // 설정 기능
-                }
-                
-                if ui.add(egui::Button::image(
-                egui::Image::from_texture(egui::load::SizedTexture::new(self.lock_icon.id(),
-                    egui::vec2(20.0, 20.0)))
-                )).clicked() {
-                    // 잠금 기능
-                }
-                
-                if ui.add(egui::Button::image(
-                egui::Image::from_texture(egui::load::SizedTexture::new(self.play_icon.id(),
-                    egui::vec2(20.0, 20.0)))
-                )).clicked() {
-                    // 재생 기능
-                }
-            });
-        });
+        ui.label("우측 상단");
     }
     
     fn render_right_bottom(&mut self, ui: &mut egui::Ui) {
@@ -323,7 +344,7 @@ impl Page  for MainPage {
             self.area._initialize(full_rect);
 
             ui.allocate_new_ui(self.area.top_layer.clone(), |ui| {
-                self.render_top_layer(ui);
+                self.render_top_layer(ui,&mut returnV);
             });
             ui.allocate_new_ui(self.area.left_top.clone(), |ui| {
                 self.render_left_top(ui);

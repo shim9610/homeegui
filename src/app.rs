@@ -60,7 +60,7 @@ impl App for MyApp {
                 self.State = nstate;
             }
             PageState::MAIN => {
-                ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(2800.0, 1200.0)));
+                ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(1500.0, 900.0)));
                 let nstate: PageState=self.Main.run( ctx, frame);
                 self.State = nstate;
             }
