@@ -1,10 +1,10 @@
-use crate::app::{Page, PageState};
+use crate::Frontend::app::{Page, PageState};
 use Rusty_egui::egui::UiBuilder;
-use crate::ui_styles::UiStyle;
+use crate::Frontend::Utility::ui_styles::UiStyle;
 use Rusty_egui::egui;
 use Rusty_egui::eframe;
-use crate::ui_styles::{ContextStyle, WidgetStyle};
-use crate::egui::Rect;
+use crate::Frontend::Utility::ui_styles::{ContextStyle, WidgetStyle};
+use Rusty_egui::egui::Rect;
 use usvg;
 use resvg;
 use egui::ColorImage;
@@ -298,7 +298,7 @@ impl MainPage {
                     // 최근 파일 목록 UI 구현
                 },
                 LeftTabState::None => {
-                    print!("init");
+                    
                 }
             }
         });

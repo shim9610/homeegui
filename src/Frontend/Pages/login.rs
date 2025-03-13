@@ -1,14 +1,13 @@
-use crate::app::{Page, PageState};
+use crate::Frontend::app::{Page, PageState};
 use Rusty_egui::egui::UiBuilder;
-use crate::ui_styles::UiStyle;
 use Rusty_egui::egui;
 use Rusty_egui::eframe;
-use crate::ui_styles::{ContextStyle, WidgetStyle};
+use crate::Frontend::Utility::ui_styles::{ContextStyle, WidgetStyle, UiStyle};
 
 
 pub struct MakeAccountPage{
     _name: String,
-    _id_field: String,  // 이렇게 필드 추가
+    id_field: String,  // 이렇게 필드 추가
     password_field: String,
     password_check_field: String,
     name_field: String,
@@ -23,7 +22,7 @@ impl MakeAccountPage {
     pub fn new(name: &str) -> Self {
         Self {
             _name: name.to_string(),
-            _id_field: String::new(),
+            id_field: String::new(),
             password_field: String::new(),
             password_check_field: String::new(),
             name_field: String::new(),
@@ -152,7 +151,7 @@ impl Page for MakeAccountPage {
                         .show(ui, |ui| {
                             // 1행
                             ui.add(
-                                egui::TextEdit::singleline(&mut self.job_field)
+                                egui::TextEdit::singleline(&mut self.id_field)
                                     .hint_text("ID를 입력하세요"),
                             );
                             ui.label("가입 사유");
