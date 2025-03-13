@@ -25,7 +25,7 @@ if event_manager.is_action_triggered(Action::Copy) {
 }
 ```
 
-## 2. UI 컴포넌트 라이브러리 클래스
+## 2. UI 컴포넌트 라이브러리 클래스 icon_loader.rs
 
 **목적**: 재사용 가능한 UI 요소 제공하여 일관된 디자인 시스템 구축
 

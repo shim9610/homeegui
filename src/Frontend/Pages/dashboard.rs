@@ -8,6 +8,7 @@ use Rusty_egui::egui::Rect;
 use usvg;
 use resvg;
 use egui::ColorImage;
+use crate::Frontend::Utility::icon_loader::{IconButton,Icon,ButtonStyle};
 use Rusty_egui::image::{ImageBuffer, Rgba};
 use tiny_skia;
 const LOCK_ICON: &[u8] = include_bytes!("icon/lock.svg");
@@ -260,25 +261,78 @@ impl MainPage {
             });
         });
     }
-
-    fn render_left_top(&mut self, ui: &mut egui::Ui) {
+    //Plain,     // 프레임 없음
+    //Framed,    // 프레임 있음
+    //Menu,      // 메뉴 항목 스타일
+    //Primary,   // 주요 액션 버튼
+    //Secondary, // 보조 액션 버튼
+    fn render_left_top(&mut self, ui : &mut egui::Ui,ctx: &egui::Context) {
         ui.vertical(|ui| {
             ui.heading("탐색기");
             ui.separator();
             
             // 탭 버튼 UI
-            ui.horizontal(|ui| {
-                if ui.selectable_label(self.current_left_tab == LeftTabState::Files, "파일").clicked() {
-                    self.current_left_tab = LeftTabState::Files;
+            ui.vertical_centered(|ui| {
+                if IconButton::new(ctx, Icon::MAIL, ButtonStyle::Plain)
+                    .size(egui::vec2(24.0, 24.0))
+                    .with_style(&UiStyle::debug())  
+                    //.with_hover_style(&UiStyle::bright_blue())
+                    //.with_click_style(&UiStyle::bright_blue())
+                    .tooltip("mail")
+                    .show(ui)
+                    .clicked() 
+                {
+                   
+
                 }
-                
-                if ui.selectable_label(self.current_left_tab == LeftTabState::Favorites, "즐겨찾기").clicked() {
-                    self.current_left_tab = LeftTabState::Favorites;
-                }
-                
-                if ui.selectable_label(self.current_left_tab == LeftTabState::Recent, "최근").clicked() {
-                    self.current_left_tab = LeftTabState::Recent;
-                }
+                if IconButton::new(ctx, Icon::MAIL, ButtonStyle::Framed)
+                .size(egui::vec2(24.0, 24.0))
+                .with_style(&UiStyle::deep_navy(2))  
+                //.with_hover_style(&UiStyle::bright_blue())
+                //.with_click_style(&UiStyle::bright_blue())
+                .tooltip("mail")
+                .show(ui)
+                .clicked() 
+            {
+               
+
+            }
+            if IconButton::new(ctx, Icon::MAIL, ButtonStyle::Menu)
+            .size(egui::vec2(24.0, 24.0))
+            .with_style(&UiStyle::deep_navy(1))  
+            //.with_hover_style(&UiStyle::bright_blue())
+            //.with_click_style(&UiStyle::bright_blue())
+            .tooltip("mail")
+            .show(ui)
+            .clicked() 
+        {
+           
+
+        }
+        if IconButton::new(ctx, Icon::MAIL, ButtonStyle::Primary)
+        .size(egui::vec2(24.0, 24.0))
+        .with_style(&UiStyle::dark_blue())  
+        //.with_hover_style(&UiStyle::bright_blue())
+        //.with_click_style(&UiStyle::bright_blue())
+        .tooltip("mail")
+        .show(ui)
+        .clicked() 
+    {
+       
+
+    }
+    if IconButton::new(ctx, Icon::MAIL, ButtonStyle::Secondary)
+    .size(egui::vec2(24.0, 24.0))
+    .with_style(&UiStyle::bright_blue())  
+    //.with_hover_style(&UiStyle::bright_blue())
+    //.with_click_style(&UiStyle::bright_blue())
+    .tooltip("mail")
+    .show(ui)
+    .clicked() 
+{
+   
+
+}
             });
             
             ui.separator();
@@ -347,7 +401,7 @@ impl Page  for MainPage {
                 self.render_top_layer(ui,&mut returnV);
             });
             ui.allocate_new_ui(self.area.left_top.clone(), |ui| {
-                self.render_left_top(ui);
+                self.render_left_top(ui,ctx);
             });
             ui.allocate_new_ui(self.area.left_bottom.clone(), |ui| {
                 self.render_left_bottom(ui);

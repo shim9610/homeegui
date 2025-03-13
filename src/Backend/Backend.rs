@@ -7,3 +7,9 @@ fn main() {
     // 백엔드에도 적당히 함수를 만든 뒤 호출할 수 있음
     // backend::something_init();
 }
+
+
+
+
+
+

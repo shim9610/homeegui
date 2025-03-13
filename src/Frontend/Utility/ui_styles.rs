@@ -68,6 +68,16 @@ impl UiStyle {
             hover: Color32::from_rgb(80, 140, 230),     // 호버 시 더 밝은 파란색
         }
     }
+    pub fn debug() -> Self {
+        Self {
+            background: Color32::from_rgb(0, 0, 0),
+            selected: Color32::from_rgb(150, 150, 150),  // 조금 더 밝은 파란색
+            accent: Color32::from_rgb(255, 255, 255),   // 흰색 강조
+            text: Color32::WHITE,
+            border: Color32::from_rgb(40, 40, 40),     // 어두운 파란색 테두리
+            hover: Color32::from_rgb(150, 150, 150),     // 호버 시 더 밝은 파란색
+        }
+    }
 }
 pub trait ContextStyle {
     fn apply_style(&self, style: &UiStyle);
