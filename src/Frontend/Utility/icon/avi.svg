@@ -1,0 +1,10 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="32" height="32" fill="#1E1E1E"/>
+<path d="M19.2 4V10.4L25.6 10.4" stroke="#F3F4F6" stroke-width="1.92" stroke-miterlimit="10"/>
+<path d="M25.6 13.6L25.6 10.4L19.2 4L6.4 4L6.4 13.6" stroke="#F3F4F6" stroke-width="1.92" stroke-miterlimit="10" stroke-linecap="square"/>
+<path d="M6.4 24.8L6.4 28L25.6 28V24.8" stroke="#F3F4F6" stroke-width="1.92" stroke-miterlimit="10" stroke-linecap="square"/>
+<path d="M13.6 21.6L13.36 20.72H11.84L11.68 21.6H10.32L11.84 17.04H13.52L15.04 21.6H13.6ZM13.12 19.76L12.96 19.04C12.88 18.88 12.88 18.64 12.8 18.4C12.72 18.16 12.72 17.92 12.64 17.84C12.64 17.92 12.56 18.16 12.56 18.4C12.56 18.64 12.4 19.12 12.16 19.84H13.12V19.76Z" fill="#F3F4F6"/>
+<path d="M18.08 17.04H19.44L17.92 21.6H16.48L14.96 17.04H16.32L16.96 19.36C17.12 19.84 17.12 20.24 17.2 20.4C17.2 20.24 17.28 20.08 17.28 19.84C17.28 19.6 17.36 19.44 17.36 19.36L18.08 17.04Z" fill="#F3F4F6"/>
+<path d="M19.92 21.6V17.04H21.2V21.6H19.92Z" fill="#F3F4F6"/>
+<path d="M28 13.6L4 13.6L4 24.8L28 24.8L28 13.6Z" stroke="#F3F4F6" stroke-width="1.92" stroke-miterlimit="10" stroke-linecap="square"/>
+</svg>
