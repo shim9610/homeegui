@@ -6,7 +6,8 @@ use Rusty_egui::image::{ImageBuffer, Rgba};
 use tiny_skia;
 use std::collections::HashMap;
 use crate::Frontend::Utility::ui_styles::{UiStyle,ContextStyle};
-
+use std::rc::Rc;
+use std::cell::RefCell;
 
 
 
@@ -277,6 +278,7 @@ pub struct IconButton {
     default_style: Option<UiStyle>,
     hover_style: Option<UiStyle>,
     click_style: Option<UiStyle>,
+    id:usize,
 }
 
 impl IconButton {
@@ -299,6 +301,7 @@ impl IconButton {
             default_style: None,
             hover_style: None,
             click_style: None,
+            id:0,
         }
     }
     
@@ -486,3 +489,49 @@ impl IconButton {
         
 }
 
+struct ToggleController {
+    selected: Vec<bool>,
+    buttons: Vec<IconButton>,
+    index:usize,
+    removed:Vec<usize>,
+} 
+
+impl ToggleController {
+    fn new() -> Self {
+        let size=0;
+        Self {
+            selected: vec![false; size],
+            buttons: vec![],
+            index:0,
+            removed:vec![],
+
+        }
+    }
+    fn add(&mut self, newbutton: IconButton)->usize {
+
+        if self.buttons.len()>self.index{
+            self.removed.retain(|&x| x != self.index);
+            self.selected[self.index]=false;
+            self.buttons[self.index]=newbutton;
+        }else{
+            self.buttons.push(newbutton);
+            self.selected.push(false);
+            self.index=self.buttons.len();
+            
+        }
+        self.index.clone()
+    }
+    fn remove(&mut self, index:usize) {
+        self.removed.push(index);
+        self.index=index;
+    }
+    fn call_toggle(&mut self,id:usize){
+        if !self.removed.contains(&id) && self.buttons.len()>id {
+        for i in 0..self.selected.len() {
+            self.selected[i] = false;
+        }
+        self.selected[id]=true;
+        }
+    }
+    
+}
