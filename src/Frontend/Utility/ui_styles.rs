@@ -24,6 +24,7 @@ impl UiStyle {
                 text: Color32::WHITE,                        // 흰색 텍스트
                 border: Color32::from_rgb(35, 40, 50),       // 테두리
                 hover: Color32::from_rgb(40, 50, 65)         // 호버 효과
+                
             }
         } else if textflag == 2 {
             Self {

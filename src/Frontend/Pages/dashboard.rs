@@ -104,13 +104,13 @@ impl AreaStructure {
     }
     pub fn _initialize(&mut self, window_rect_no_margin: Rect) {
 
-        let margin:f32 = 10.0;
+        let margin:f32 = 5.0;
         let  window_rect = Rect::from_min_size(
             egui::pos2(window_rect_no_margin.min.x + margin, window_rect_no_margin.min.y + margin),
             egui::vec2(window_rect_no_margin.width() - margin , window_rect_no_margin.height() - margin )
         );
         // 비율 상수들
-        let top_layer_ratio = 0.15;      // 상단 영역 높이 비율
+        let top_layer_ratio = 0.05;      // 상단 영역 높이 비율
         let bottom_layer_ratio = 0.1;   // 하단 영역 높이 비율
         let left_side_ratio = 0.2;      // 좌측 영역 너비 비율
         
@@ -267,72 +267,66 @@ impl MainPage {
     //Primary,   // 주요 액션 버튼
     //Secondary, // 보조 액션 버튼
     fn render_left_top(&mut self, ui : &mut egui::Ui,ctx: &egui::Context) {
-        ui.vertical(|ui| {
-            ui.heading("탐색기");
+        ui.vertical_centered(|ui| {
+            ui.label("Memu");
             ui.separator();
-            
             // 탭 버튼 UI
             ui.vertical_centered(|ui| {
-                if IconButton::new(ctx, Icon::MAIL, ButtonStyle::Plain)
-                    .size(egui::vec2(24.0, 24.0))
-                    .with_style(&UiStyle::debug())  
-                    //.with_hover_style(&UiStyle::bright_blue())
-                    //.with_click_style(&UiStyle::bright_blue())
-                    .tooltip("mail")
-                    .show(ui)
-                    .clicked() 
-                {
-                   
-
-                }
-                if IconButton::new(ctx, Icon::MAIL, ButtonStyle::Framed)
-                .size(egui::vec2(24.0, 24.0))
-                .with_style(&UiStyle::deep_navy(2))  
-                //.with_hover_style(&UiStyle::bright_blue())
-                //.with_click_style(&UiStyle::bright_blue())
-                .tooltip("mail")
-                .show(ui)
-                .clicked() 
-            {
-               
-
-            }
-            if IconButton::new(ctx, Icon::MAIL, ButtonStyle::Menu)
+            if IconButton::new(ctx, Icon::CLOUD_WITH_BK, ButtonStyle::Menu)
             .size(egui::vec2(24.0, 24.0))
             .with_style(&UiStyle::deep_navy(1))  
-            //.with_hover_style(&UiStyle::bright_blue())
-            //.with_click_style(&UiStyle::bright_blue())
-            .tooltip("mail")
+            .with_hover_style(&UiStyle::deep_navy(1))
+            .with_click_style(&UiStyle::bright_blue())
+            .tooltip("Data Cloud")
             .show(ui)
             .clicked() 
         {
            
 
-        }
-        if IconButton::new(ctx, Icon::MAIL, ButtonStyle::Primary)
+        } 
+        if IconButton::new(ctx, Icon::DOCKER, ButtonStyle::Menu)
         .size(egui::vec2(24.0, 24.0))
-        .with_style(&UiStyle::dark_blue())  
-        //.with_hover_style(&UiStyle::bright_blue())
-        //.with_click_style(&UiStyle::bright_blue())
-        .tooltip("mail")
+        .with_style(&UiStyle::deep_navy(1))  
+        .with_hover_style(&UiStyle::deep_navy(1))
+        .with_click_style(&UiStyle::bright_blue())
+        .tooltip("Docker Management")
         .show(ui)
         .clicked() 
-    {
-       
+        {
+        
 
-    }
-    if IconButton::new(ctx, Icon::MAIL, ButtonStyle::Secondary)
-    .size(egui::vec2(24.0, 24.0))
-    .with_style(&UiStyle::bright_blue())  
-    //.with_hover_style(&UiStyle::bright_blue())
-    //.with_click_style(&UiStyle::bright_blue())
-    .tooltip("mail")
-    .show(ui)
-    .clicked() 
-{
-   
+        } 
+        if IconButton::new(ctx, Icon::CONTROLBAR, ButtonStyle::Menu)
+        .size(egui::vec2(24.0, 24.0))
+        .with_style(&UiStyle::deep_navy(1))  
+        .with_hover_style(&UiStyle::deep_navy(1))
+        .with_click_style(&UiStyle::bright_blue())
+        .tooltip("Control Panel")
+        .show(ui)
+        .clicked() 
+        {
+        
 
-}
+        } 
+        if IconButton::new(ctx, Icon::FILE, ButtonStyle::Menu)
+        .size(egui::vec2(24.0, 24.0))
+        .with_style(&UiStyle::deep_navy(1))  
+        .with_hover_style(&UiStyle::deep_navy(1))
+        .with_click_style(&UiStyle::bright_blue())
+        .tooltip("Terminal")
+        .show(ui)
+        .clicked() 
+        {
+        
+
+        }  
+
+        
+
+
+
+
+
             });
             
             ui.separator();

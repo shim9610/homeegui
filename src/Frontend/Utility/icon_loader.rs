@@ -48,6 +48,7 @@ pub enum Icon {
     QUESTION,
     BELL2,
     FILE2,
+    DOCKER,
 }
 
 const skip_next : &[u8]= include_bytes!("icon/Skip Next.svg");
@@ -83,6 +84,7 @@ const hourglass : &[u8]= include_bytes!("icon/hourglass.svg");
 const question : &[u8]= include_bytes!("icon/question.svg");
 const bell2 : &[u8]= include_bytes!("icon/bell2.svg");
 const file2 : &[u8]= include_bytes!("icon/file2.svg");
+const docker : &[u8]= include_bytes!("icon/docker.svg");
 
 impl Icon {
     pub fn data(&self) -> &'static [u8] {
@@ -120,6 +122,7 @@ impl Icon {
             Icon::QUESTION => question,
             Icon::BELL2 => bell2,
             Icon::FILE2 => file2,
+            Icon::DOCKER => docker,
         }
     }
 }
@@ -136,6 +139,8 @@ fn apply_interactive_styles(
         } else if response.hovered() {
             // 호버 스타일
             cpdata.hover_style.map_or(egui::Color32::from_rgb(80, 140, 230), |s| s.hover)
+
+
         } else {
             return; // 호버나 클릭 상태가 아니면 아무것도 하지 않음
         };
@@ -350,7 +355,7 @@ impl IconButton {
                 if let Some(hover_style) = &self.hover_style {
                     //visuals.widgets.hovered.bg_fill = hover_style.background;
                     visuals.widgets.hovered.bg_fill = hover_style.hover;
-                    visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1.0, hover_style.text);
+                    visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1.0, hover_style.text);//default_style
                     visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, hover_style.border);
                 }
                 
