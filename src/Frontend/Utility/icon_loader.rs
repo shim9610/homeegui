@@ -134,10 +134,14 @@ fn apply_interactive_styles(
 ) {
         // 상태에 따라 적절한 배경색 선택
         // 상태에 따라 적절한 배경색 선택
+
         let background_color = if response.clicked() {
             // 클릭 스타일 
             cpdata.click_style.map_or(egui::Color32::from_rgb(37, 99, 235), |s| s.accent)
         } else if response.hovered() {
+            if matches!(cpdata.style, ButtonStyle::Explorer) {
+                return;
+            }
             // 호버 스타일
             cpdata.hover_style.map_or(egui::Color32::from_rgb(80, 140, 230), |s| s.hover)
 
@@ -263,6 +267,7 @@ pub enum ButtonStyle {
     Menu,      // 메뉴 항목 스타일
     Primary,   // 주요 액션 버튼
     Secondary, // 보조 액션 버튼
+    Explorer,
     // 필요한 다른 스타일들...
 }
 #[derive(Clone)]
@@ -337,6 +342,55 @@ impl IconButton {
                 
                 ui.add(button)
             },
+            ButtonStyle::Explorer => {
+                let text = match &self.tooltip {
+                    Some(text) => {
+                       //println!("{}", text);
+                        text.as_str()
+                    },
+                    None => {
+                        //println!("No tooltip");
+                        "No tooltip"
+                    }
+                };
+            
+                let (rect, response) = ui.allocate_at_least(self.size, egui::Sense::click());
+            
+                // 배경 투명
+                // ui.painter().rect_filled(rect, 0.0, egui::Color32::TRANSPARENT);
+            
+                // 아이콘 그리기
+                let icon_pos = egui::pos2(
+                    rect.center().x - (self.size.x * 0.5),
+                    rect.center().y - (self.size.y * 0.5),
+                );
+                ui.painter().image(
+                    self.texture.id(),
+                    egui::Rect::from_min_size(icon_pos, self.size),
+                    egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
+                    egui::Color32::WHITE,
+                );
+            
+                // ★추가★ 텍스트(파일명) 표시:
+                //    아이콘 아래 / 위 원하는 곳에 그리기
+                let text_pos = egui::pos2(
+                    rect.center().x - 20.0,
+                    rect.center().y + (self.size.y * 0.4), // 아이콘 하단 아래쪽
+                );
+                ui.painter().text(
+                    text_pos,
+                    egui::Align2::LEFT_TOP,
+                    text,
+                    egui::FontId::proportional(14.0),
+                    egui::Color32::WHITE,
+                );
+            
+                if response.clicked() {
+                    println!("Explorer style icon clicked: {}", text);
+                }
+            
+                response
+            }
             ButtonStyle::Menu => {
                 // 기본 스타일 적용 (제공된 경우)
                 let mut visuals = ui.style().visuals.clone();
@@ -376,11 +430,11 @@ impl IconButton {
                 let button = egui::Button::new({
                 let text = match &self.tooltip {
                     Some(text) => {
-                            println!("{}", text);
+                           //println!("{}", text);
                             text.as_str() // 또는 &text[..]
                     },
                     None => {
-                            println!("No tooltip");
+                            //println!("No tooltip");
                             "No tooltip"
                     }
                     };
@@ -497,15 +551,22 @@ impl IconButton {
 
         
 }
+pub trait TapPage {
+    fn new(title: &str) -> Self where Self: Sized;
+    fn add(&mut self, item: &str);
+    fn render(&mut self, ui: &mut egui::Ui,ctx: &egui::Context);
+    fn clone_page(&self) -> Box<dyn TapPage>; // Clone 대신 사용
+    fn activate(&mut self);
+}
 
 pub struct ToggleController {
     selected: Vec<bool>,
     buttons: Vec<IconButton>,
     callbacks: Vec<Option<Box<dyn Fn()+ 'static>>>, 
+    pages: Vec<Option<Rc<RefCell<Box<dyn TapPage>>>>>, // TapPage 트레잇 객체 저장
     index:usize,
     removed:Vec<usize>,
 } 
-
 impl ToggleController {
     pub fn new() -> Self {
         let size=0;
@@ -513,26 +574,29 @@ impl ToggleController {
             selected: vec![false; size],
             buttons: vec![],
             callbacks: Vec::new(),
+            pages: vec![], // 페이지 벡터 초기화
             index:0,
             removed:vec![],
-
         }
     }
-    pub fn add<F>(&mut self, newbutton: IconButton,callback: Option<F>)->usize 
+    pub fn add<F,T>(&mut self, newbutton: IconButton,callback: Option<F>, page: Option<Rc<RefCell<Box<dyn TapPage>>>>)->usize 
     where 
-    F: Fn() + 'static
+    F: Fn() + 'static,
+    T: TapPage + 'static
     {
         let boxed_callback = callback.map(|f| Box::new(f) as Box<dyn Fn()+ 'static>);
-
+       
         if self.buttons.len()>self.index{
             self.removed.retain(|&x| x != self.index);
             self.selected[self.index]=false;
             self.buttons[self.index]=newbutton;
             self.callbacks[self.index]=boxed_callback;
+            self.pages[self.index] = page; // 페이지 업데이트
         }else{
             self.buttons.push(newbutton);
             self.selected.push(false);
             self.callbacks.push(boxed_callback);
+            self.pages.push(page); // 새 페이지 추가
             self.index=self.buttons.len();
             
         }
@@ -542,20 +606,37 @@ impl ToggleController {
         self.removed.push(index);
         self.index=index;
     }
-    fn call_toggle(&mut self,id:usize){
+    fn call_toggle(&mut self,id:usize,ui: &mut egui::Ui,ctx: &egui::Context){
         if !self.removed.contains(&id) && self.buttons.len()>id {
         for i in 0..self.selected.len() {
             self.selected[i] = false;
             self.buttons[i]=self.buttons[i].clone().with_style(&UiStyle::deep_navy(1));
-
+        
+        
         }
         self.selected[id]=true;
         self.buttons[id]=self.buttons[id].clone().with_style(&UiStyle::bright_blue());
+        
+        }
+    }
+    pub fn update_page(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+        if let Some(selected_idx) = self.selected.iter().position(|&selected| selected) {
+            if !self.removed.contains(&selected_idx) {
+                if let Some(page_rc) = &self.pages[selected_idx] {
+                    // try_borrow_mut는 Result를 반환
+                    if let Ok(mut page) = page_rc.try_borrow_mut() {
+                        page.activate();
+                    } else {
+                        // 이미 가변 대여 중인 경우 처리
+                        println!("페이지가 이미 가변 대여 중입니다.");
+                    }
+                }
+            }
         }
     }
 
-    fn show_button(&mut self, id: usize, ui: &mut egui::Ui) -> Option<egui::Response> 
-
+    
+    fn show_button(&mut self, id: usize, ui: &mut egui::Ui,ctx:&egui::Context ) -> Option<egui::Response> 
     {
         // 유효한 ID인지 먼저 확인
 
@@ -567,10 +648,10 @@ impl ToggleController {
             
             // 클릭 이벤트 처리
             if response.clicked() {
-                self.call_toggle(id);
-                println!("{:?}",self.selected);
+                self.call_toggle(id,ui,ctx);
+               // println!("{:?}",self.selected);
                             // 외부에서 제공된 콜백 실행
-           //let callback=&self.callbacks[id];
+                //let callback=&self.callbacks[id];
             if let Some(callback) = &self.callbacks[id] {
                 callback(); 
             }
@@ -582,11 +663,12 @@ impl ToggleController {
             None
         }
     }
-    pub fn show(&mut self,  ui: &mut egui::Ui){
+    pub fn show(&mut self,  ui: &mut egui::Ui,ctx:&egui::Context){
         for index in 0 .. self.buttons.len(){
             if !self.removed.contains(&index){
-                let _ = self.show_button(index,ui);
+                let _ = self.show_button(index,ui,ctx);
             }
         }
     }
 }
+
