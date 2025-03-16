@@ -8,7 +8,7 @@ use Rusty_egui::egui::Rect;
 use usvg;
 use resvg;
 use egui::ColorImage;
-use crate::Frontend::Utility::icon_loader::{IconButton,Icon,ButtonStyle};
+use crate::Frontend::Utility::icon_loader::{IconButton,Icon,ButtonStyle,ToggleController};
 use Rusty_egui::image::{ImageBuffer, Rgba};
 use tiny_skia;
 const LOCK_ICON: &[u8] = include_bytes!("icon/lock.svg");
@@ -194,6 +194,7 @@ pub struct MainPage {
     play_icon: egui::TextureHandle,
     forward_icon: egui::TextureHandle,
     current_left_tab: LeftTabState,
+    toggle_set:ToggleController,
 }
 impl MainPage {
     pub fn new(ctx: &egui::Context, name: &str) -> Self {
@@ -204,7 +205,32 @@ impl MainPage {
         let back_icon = load_svg_icon(ctx, BACK_ICON);
         let forward_icon = load_svg_icon(ctx, FORWARD_ICON);
         let current_left_tab = LeftTabState::None;
-        
+        let mut toggle=ToggleController::new();
+        toggle.add::<_>(IconButton::new(ctx, Icon::CLOUD_WITH_BK, ButtonStyle::Menu)
+        .size(egui::vec2(24.0, 24.0))
+        .with_style(&UiStyle::deep_navy(1))  
+        .with_hover_style(&UiStyle::deep_navy(1))
+        .with_click_style(&UiStyle::bright_blue())
+        .tooltip("Data Cloud"),None as Option<fn()>);
+        toggle.add::<_>(IconButton::new(ctx, Icon::DOCKER, ButtonStyle::Menu)
+        .size(egui::vec2(24.0, 24.0))
+        .with_style(&UiStyle::deep_navy(1))  
+        .with_hover_style(&UiStyle::deep_navy(1))
+        .with_click_style(&UiStyle::bright_blue())
+        .tooltip("Docker Management"),Some(|| println!("Docker Clicked")));
+        toggle.add::<_>(IconButton::new(ctx, Icon::CONTROLBAR, ButtonStyle::Menu)
+        .size(egui::vec2(24.0, 24.0))
+        .with_style(&UiStyle::deep_navy(1))  
+        .with_hover_style(&UiStyle::deep_navy(1))
+        .with_click_style(&UiStyle::bright_blue())
+        .tooltip("Control Panel"),None as Option<fn()>);
+        toggle.add::<_>(IconButton::new(ctx, Icon::FILE, ButtonStyle::Menu)
+        .size(egui::vec2(24.0, 24.0))
+        .with_style(&UiStyle::deep_navy(1))  
+        .with_hover_style(&UiStyle::deep_navy(1))
+        .with_click_style(&UiStyle::bright_blue())
+        .tooltip("Terminal"),None as Option<fn()>);
+
         Self {
             _name: name.to_string(),
             _id_field: String::new(),
@@ -215,6 +241,7 @@ impl MainPage {
             back_icon,
             forward_icon,
             current_left_tab,
+            toggle_set:toggle,
            
         }
     }
@@ -267,66 +294,12 @@ impl MainPage {
     //Primary,   // 주요 액션 버튼
     //Secondary, // 보조 액션 버튼
     fn render_left_top(&mut self, ui : &mut egui::Ui,ctx: &egui::Context) {
+        let mut toggle=ToggleController::new();
         ui.vertical_centered(|ui| {
             ui.label("Memu");
-            ui.separator();
-            // 탭 버튼 UI
+            ui.separator();        
             ui.vertical_centered(|ui| {
-            if IconButton::new(ctx, Icon::CLOUD_WITH_BK, ButtonStyle::Menu)
-            .size(egui::vec2(24.0, 24.0))
-            .with_style(&UiStyle::deep_navy(1))  
-            .with_hover_style(&UiStyle::deep_navy(1))
-            .with_click_style(&UiStyle::bright_blue())
-            .tooltip("Data Cloud")
-            .show(ui)
-            .clicked() 
-        {
-           
-
-        } 
-        if IconButton::new(ctx, Icon::DOCKER, ButtonStyle::Menu)
-        .size(egui::vec2(24.0, 24.0))
-        .with_style(&UiStyle::deep_navy(1))  
-        .with_hover_style(&UiStyle::deep_navy(1))
-        .with_click_style(&UiStyle::bright_blue())
-        .tooltip("Docker Management")
-        .show(ui)
-        .clicked() 
-        {
-        
-
-        } 
-        if IconButton::new(ctx, Icon::CONTROLBAR, ButtonStyle::Menu)
-        .size(egui::vec2(24.0, 24.0))
-        .with_style(&UiStyle::deep_navy(1))  
-        .with_hover_style(&UiStyle::deep_navy(1))
-        .with_click_style(&UiStyle::bright_blue())
-        .tooltip("Control Panel")
-        .show(ui)
-        .clicked() 
-        {
-        
-
-        } 
-        if IconButton::new(ctx, Icon::FILE, ButtonStyle::Menu)
-        .size(egui::vec2(24.0, 24.0))
-        .with_style(&UiStyle::deep_navy(1))  
-        .with_hover_style(&UiStyle::deep_navy(1))
-        .with_click_style(&UiStyle::bright_blue())
-        .tooltip("Terminal")
-        .show(ui)
-        .clicked() 
-        {
-        
-
-        }  
-
-        
-
-
-
-
-
+            self.toggle_set.show(ui);
             });
             
             ui.separator();

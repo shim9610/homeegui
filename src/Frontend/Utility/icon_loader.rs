@@ -374,7 +374,16 @@ impl IconButton {
                 ui.style_mut().visuals = visuals.clone();
                 
                 let button = egui::Button::new({
-                    let text = format!("{:?}", self.icon);
+                let text = match &self.tooltip {
+                    Some(text) => {
+                            println!("{}", text);
+                            text.as_str() // 또는 &text[..]
+                    },
+                    None => {
+                            println!("No tooltip");
+                            "No tooltip"
+                    }
+                    };
                     let mut rich_text = egui::RichText::new(text);
                     if self.selected {
                         rich_text = rich_text.strong();
@@ -489,39 +498,47 @@ impl IconButton {
         
 }
 
-struct ToggleController {
+pub struct ToggleController {
     selected: Vec<bool>,
     buttons: Vec<IconButton>,
+    callbacks: Vec<Option<Box<dyn Fn()+ 'static>>>, 
     index:usize,
     removed:Vec<usize>,
 } 
 
 impl ToggleController {
-    fn new() -> Self {
+    pub fn new() -> Self {
         let size=0;
         Self {
             selected: vec![false; size],
             buttons: vec![],
+            callbacks: Vec::new(),
             index:0,
             removed:vec![],
 
         }
     }
-    fn add(&mut self, newbutton: IconButton)->usize {
+    pub fn add<F>(&mut self, newbutton: IconButton,callback: Option<F>)->usize 
+    where 
+    F: Fn() + 'static
+    {
+        let boxed_callback = callback.map(|f| Box::new(f) as Box<dyn Fn()+ 'static>);
 
         if self.buttons.len()>self.index{
             self.removed.retain(|&x| x != self.index);
             self.selected[self.index]=false;
             self.buttons[self.index]=newbutton;
+            self.callbacks[self.index]=boxed_callback;
         }else{
             self.buttons.push(newbutton);
             self.selected.push(false);
+            self.callbacks.push(boxed_callback);
             self.index=self.buttons.len();
             
         }
         self.index.clone()
     }
-    fn remove(&mut self, index:usize) {
+    pub fn remove(&mut self, index:usize) {
         self.removed.push(index);
         self.index=index;
     }
@@ -529,9 +546,47 @@ impl ToggleController {
         if !self.removed.contains(&id) && self.buttons.len()>id {
         for i in 0..self.selected.len() {
             self.selected[i] = false;
+            self.buttons[i]=self.buttons[i].clone().with_style(&UiStyle::deep_navy(1));
+
         }
         self.selected[id]=true;
+        self.buttons[id]=self.buttons[id].clone().with_style(&UiStyle::bright_blue());
         }
     }
-    
+
+    fn show_button(&mut self, id: usize, ui: &mut egui::Ui) -> Option<egui::Response> 
+
+    {
+        // 유효한 ID인지 먼저 확인
+
+        if id < self.buttons.len() && !self.removed.contains(&id) {
+            // 현재 선택 상태를 버튼에 반영
+            let button = self.buttons[id].clone().selected(self.selected[id]);
+            // 버튼 렌더링 및 응답 가져오기
+            let response = button.show(ui);
+            
+            // 클릭 이벤트 처리
+            if response.clicked() {
+                self.call_toggle(id);
+                println!("{:?}",self.selected);
+                            // 외부에서 제공된 콜백 실행
+           //let callback=&self.callbacks[id];
+            if let Some(callback) = &self.callbacks[id] {
+                callback(); 
+            }
+            }
+            
+            Some(response)
+        } else {
+            // 유효하지 않은 ID에 대해 None 반환
+            None
+        }
+    }
+    pub fn show(&mut self,  ui: &mut egui::Ui){
+        for index in 0 .. self.buttons.len(){
+            if !self.removed.contains(&index){
+                let _ = self.show_button(index,ui);
+            }
+        }
+    }
 }
