@@ -98,7 +98,8 @@ use Rusty_egui::image::{ImageBuffer, Rgba};
 use tiny_skia;
 use std::collections::HashMap;
 use crate::Frontend::Utility::ui_styles::{UiStyle,ContextStyle};
-
+use std::rc::Rc;
+use std::cell::RefCell;
 
 
 
@@ -225,10 +226,14 @@ fn apply_interactive_styles(
 ) {
         // 상태에 따라 적절한 배경색 선택
         // 상태에 따라 적절한 배경색 선택
+
         let background_color = if response.clicked() {
             // 클릭 스타일 
             cpdata.click_style.map_or(egui::Color32::from_rgb(37, 99, 235), |s| s.accent)
         } else if response.hovered() {
+            if matches!(cpdata.style, ButtonStyle::Explorer) {
+                return;
+            }
             // 호버 스타일
             cpdata.hover_style.map_or(egui::Color32::from_rgb(80, 140, 230), |s| s.hover)
 
@@ -354,6 +359,7 @@ pub enum ButtonStyle {
     Menu,      // 메뉴 항목 스타일
     Primary,   // 주요 액션 버튼
     Secondary, // 보조 액션 버튼
+    Explorer,
     // 필요한 다른 스타일들...
 }
 #[derive(Clone)]
@@ -369,6 +375,7 @@ pub struct IconButton {
     default_style: Option<UiStyle>,
     hover_style: Option<UiStyle>,
     click_style: Option<UiStyle>,
+    id:usize,
 }
 
 impl IconButton {
@@ -391,6 +398,7 @@ impl IconButton {
             default_style: None,
             hover_style: None,
             click_style: None,
+            id:0,
         }
     }
     
@@ -426,6 +434,55 @@ impl IconButton {
                 
                 ui.add(button)
             },
+            ButtonStyle::Explorer => {
+                let text = match &self.tooltip {
+                    Some(text) => {
+                       //println!("{}", text);
+                        text.as_str()
+                    },
+                    None => {
+                        //println!("No tooltip");
+                        "No tooltip"
+                    }
+                };
+            
+                let (rect, response) = ui.allocate_at_least(self.size, egui::Sense::click());
+            
+                // 배경 투명
+                // ui.painter().rect_filled(rect, 0.0, egui::Color32::TRANSPARENT);
+            
+                // 아이콘 그리기
+                let icon_pos = egui::pos2(
+                    rect.center().x - (self.size.x * 0.5),
+                    rect.center().y - (self.size.y * 0.5),
+                );
+                ui.painter().image(
+                    self.texture.id(),
+                    egui::Rect::from_min_size(icon_pos, self.size),
+                    egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
+                    egui::Color32::WHITE,
+                );
+            
+                // ★추가★ 텍스트(파일명) 표시:
+                //    아이콘 아래 / 위 원하는 곳에 그리기
+                let text_pos = egui::pos2(
+                    rect.center().x - 20.0,
+                    rect.center().y + (self.size.y * 0.4), // 아이콘 하단 아래쪽
+                );
+                ui.painter().text(
+                    text_pos,
+                    egui::Align2::LEFT_TOP,
+                    text,
+                    egui::FontId::proportional(14.0),
+                    egui::Color32::WHITE,
+                );
+            
+                if response.clicked() {
+                    println!("Explorer style icon clicked: {}", text);
+                }
+            
+                response
+            }
             ButtonStyle::Menu => {
                 // 기본 스타일 적용 (제공된 경우)
                 let mut visuals = ui.style().visuals.clone();
@@ -463,7 +520,16 @@ impl IconButton {
                 ui.style_mut().visuals = visuals.clone();
                 
                 let button = egui::Button::new({
-                    let text = format!("{:?}", self.icon);
+                let text = match &self.tooltip {
+                    Some(text) => {
+                           //println!("{}", text);
+                            text.as_str() // 또는 &text[..]
+                    },
+                    None => {
+                            //println!("No tooltip");
+                            "No tooltip"
+                    }
+                    };
                     let mut rich_text = egui::RichText::new(text);
                     if self.selected {
                         rich_text = rich_text.strong();
@@ -577,6 +643,127 @@ impl IconButton {
 
         
 }
+pub trait TapPage {
+    fn new(title: &str) -> Self where Self: Sized;
+    fn add(&mut self, item: &str);
+    fn render(&mut self, ui: &mut egui::Ui,ctx: &egui::Context);
+    fn clone_page(&self) -> Box<dyn TapPage>; // Clone 대신 사용
+    fn activate(&mut self);
+}
+
+pub struct ToggleController {
+    selected: Vec<bool>,
+    buttons: Vec<IconButton>,
+    callbacks: Vec<Option<Box<dyn Fn()+ 'static>>>, 
+    pages: Vec<Option<Rc<RefCell<Box<dyn TapPage>>>>>, // TapPage 트레잇 객체 저장
+    index:usize,
+    removed:Vec<usize>,
+} 
+impl ToggleController {
+    pub fn new() -> Self {
+        let size=0;
+        Self {
+            selected: vec![false; size],
+            buttons: vec![],
+            callbacks: Vec::new(),
+            pages: vec![], // 페이지 벡터 초기화
+            index:0,
+            removed:vec![],
+        }
+    }
+    pub fn add<F,T>(&mut self, newbutton: IconButton,callback: Option<F>, page: Option<Rc<RefCell<Box<dyn TapPage>>>>)->usize 
+    where 
+    F: Fn() + 'static,
+    T: TapPage + 'static
+    {
+        let boxed_callback = callback.map(|f| Box::new(f) as Box<dyn Fn()+ 'static>);
+       
+        if self.buttons.len()>self.index{
+            self.removed.retain(|&x| x != self.index);
+            self.selected[self.index]=false;
+            self.buttons[self.index]=newbutton;
+            self.callbacks[self.index]=boxed_callback;
+            self.pages[self.index] = page; // 페이지 업데이트
+        }else{
+            self.buttons.push(newbutton);
+            self.selected.push(false);
+            self.callbacks.push(boxed_callback);
+            self.pages.push(page); // 새 페이지 추가
+            self.index=self.buttons.len();
+            
+        }
+        self.index.clone()
+    }
+    pub fn remove(&mut self, index:usize) {
+        self.removed.push(index);
+        self.index=index;
+    }
+    fn call_toggle(&mut self,id:usize,ui: &mut egui::Ui,ctx: &egui::Context){
+        if !self.removed.contains(&id) && self.buttons.len()>id {
+        for i in 0..self.selected.len() {
+            self.selected[i] = false;
+            self.buttons[i]=self.buttons[i].clone().with_style(&UiStyle::deep_navy(1));
+        
+        
+        }
+        self.selected[id]=true;
+        self.buttons[id]=self.buttons[id].clone().with_style(&UiStyle::bright_blue());
+        
+        }
+    }
+    pub fn update_page(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
+        if let Some(selected_idx) = self.selected.iter().position(|&selected| selected) {
+            if !self.removed.contains(&selected_idx) {
+                if let Some(page_rc) = &self.pages[selected_idx] {
+                    // try_borrow_mut는 Result를 반환
+                    if let Ok(mut page) = page_rc.try_borrow_mut() {
+                        page.activate();
+                    } else {
+                        // 이미 가변 대여 중인 경우 처리
+                        println!("페이지가 이미 가변 대여 중입니다.");
+                    }
+                }
+            }
+        }
+    }
+
+    
+    fn show_button(&mut self, id: usize, ui: &mut egui::Ui,ctx:&egui::Context ) -> Option<egui::Response> 
+    {
+        // 유효한 ID인지 먼저 확인
+
+        if id < self.buttons.len() && !self.removed.contains(&id) {
+            // 현재 선택 상태를 버튼에 반영
+            let button = self.buttons[id].clone().selected(self.selected[id]);
+            // 버튼 렌더링 및 응답 가져오기
+            let response = button.show(ui);
+            
+            // 클릭 이벤트 처리
+            if response.clicked() {
+                self.call_toggle(id,ui,ctx);
+               // println!("{:?}",self.selected);
+                            // 외부에서 제공된 콜백 실행
+                //let callback=&self.callbacks[id];
+            if let Some(callback) = &self.callbacks[id] {
+                callback(); 
+            }
+            }
+            
+            Some(response)
+        } else {
+            // 유효하지 않은 ID에 대해 None 반환
+            None
+        }
+    }
+    pub fn show(&mut self,  ui: &mut egui::Ui,ctx:&egui::Context){
+        for index in 0 .. self.buttons.len(){
+            if !self.removed.contains(&index){
+                let _ = self.show_button(index,ui,ctx);
+            }
+        }
+    }
+}
+
 
 [ui_styles.rs]
 use Rusty_egui::egui::Color32;
@@ -829,14 +1016,61 @@ use Rusty_egui::egui::Rect;
 use usvg;
 use resvg;
 use egui::ColorImage;
-use crate::Frontend::Utility::icon_loader::{IconButton,Icon,ButtonStyle};
+use crate::Frontend::Utility::icon_loader::{IconButton,Icon,ButtonStyle,ToggleController,TapPage};
 use Rusty_egui::image::{ImageBuffer, Rgba};
 use tiny_skia;
+use std::rc::Rc;
+use std::cell::RefCell;
 const LOCK_ICON: &[u8] = include_bytes!("icon/lock.svg");
 const SETTINGS_ICON: &[u8] = include_bytes!("icon/setting.svg");
 const PLAY_ICON: &[u8] = include_bytes!("icon/Play Arrow.svg");
 const BACK_ICON: &[u8] = include_bytes!("icon/back.svg");
 const FORWARD_ICON: &[u8] = include_bytes!("icon/Forward.svg");
+use std::collections::HashMap;
+
+
+struct FILEINFO{
+    name: String,
+    size: String,
+    date: String,
+    owner: String,
+    status: String,
+}
+struct FileData{
+    files: FILEINFO,
+    index: usize,
+}
+struct Filesystem{
+    file_list: Vec<FileData>,
+    current_index: usize,
+}
+impl Filesystem{
+    fn new()->Self{
+        Self{
+            file_list: Vec::new(),
+            current_index: 0,
+        }
+    }
+    fn add_file(&mut self,mut file: FileData){
+        self.current_index=self.current_index+1;
+        file.index=self.current_index;
+        self.file_list.push(file);
+    }
+    fn get_file(&self, index: usize)->Option<&FileData>{
+        if index>=self.current_index{
+            print!("Index out of range");
+            None
+
+        }else{
+            Some(&self.file_list[index])}
+    }
+    fn get_current_file(&self)->&FileData{
+        &self.file_list[self.current_index]
+    }
+    fn get_current_index(&self)->usize{
+        self.current_index
+    }
+}
 
 
 fn load_svg_icon(ctx: &egui::Context, svg_bytes: &[u8]) -> egui::TextureHandle {
@@ -891,7 +1125,89 @@ fn load_svg_as_color_image(svg_bytes: &[u8]) -> egui::ColorImage {
     let rgba_data = pixmap.data();
     egui::ColorImage::from_rgba_unmultiplied([w as usize, h as usize], rgba_data)
 }
+#[derive(Clone)]
+struct ExplorerPage{
+    _name: String,
+    _id_field: String,  // 이렇게 필드 추가
+    draw : bool,
+}
+impl TapPage for ExplorerPage{
+    fn new(input:&str) -> Self {
+        Self {
+            _name: input.to_string(),
+            _id_field: String::new(),
+            draw:false,
 
+        }
+    }
+    fn add(&mut self,item: &str){
+
+    }
+
+    fn render(&mut self, ui: &mut egui::Ui,ctx: &egui::Context) {
+        if self.draw{
+            if IconButton::new(ctx, Icon::FOLDER2, ButtonStyle::Explorer)
+            .size(egui::vec2(40.0, 40.0))
+            .tooltip("file1")
+            .show(ui).clicked(){
+                println!("File1 Clicked");
+            }
+        }
+    }
+    fn clone_page(&self) -> Box<dyn TapPage> {
+        Box::new(Self::clone(self))
+    }
+    fn activate(&mut self) {
+        self.draw=true;
+    }
+    
+}
+impl ExplorerPage{
+    fn file(&mut self,ctx:&egui::Context,ui: &mut egui::Ui){
+        if self.draw{
+            if IconButton::new(ctx, Icon::FOLDER2, ButtonStyle::Explorer)
+            .size(egui::vec2(40.0, 40.0))
+            .tooltip("file1")
+            .show(ui).clicked(){
+                println!("File1 Clicked");
+
+            }
+            self.draw=false;
+        }
+    }
+}
+#[derive(Clone)]
+struct Basepage{
+    _name: String,
+    _id_field: String,  // 이렇게 필드 추가
+    draw : bool,
+}
+impl TapPage for Basepage{
+    fn new(input:&str) -> Self {
+        Self {
+            _name: input.to_string(),
+            _id_field: String::new(),
+            draw:false,
+        }
+    }
+    fn add(&mut self,item: &str){
+
+    }
+
+    fn render(&mut self, ui: &mut egui::Ui,ctx: &egui::Context) {
+        if self.draw{
+            ui.label("Base Page");
+            self.draw=false;
+        }
+        
+    }
+    fn clone_page(&self) -> Box<dyn TapPage> {
+        Box::new(Self::clone(self))
+    }
+    fn activate(&mut self) {
+        self.draw=true;
+    }
+}
 
 struct AreaStructure {
     window: Rect,
@@ -939,7 +1255,7 @@ impl AreaStructure {
         let left_bottom_ratio = 0.5;    // 좌측 하단 높이 비율
         
         let right_top_ratio = 0.2;      // 우측 상단 높이 비율 (우측 영역 내에서)
-        let right_bottom_ratio = 0.8;   // 우측 하단 높이 비율
+        let right_bottom_ratio = 0.9;   // 우측 하단 높이 비율
         
         // 전체 창 크기 저장
         self.window = window_rect;
@@ -1015,9 +1331,13 @@ pub struct MainPage {
     play_icon: egui::TextureHandle,
     forward_icon: egui::TextureHandle,
     current_left_tab: LeftTabState,
+    toggle_set:ToggleController,
+    explorer: Option<Rc<RefCell<Box<dyn TapPage>>>>,
 }
 impl MainPage {
-    pub fn new(ctx: &egui::Context, name: &str) -> Self {
+    pub fn new(ctx: &egui::Context, name: &str) -> Self 
+
+    {
         // SVG 아이콘 로딩
         let lock_icon = load_svg_icon(ctx, LOCK_ICON);
         let settings_icon = load_svg_icon(ctx, SETTINGS_ICON);
@@ -1025,6 +1345,43 @@ impl MainPage {
         let back_icon = load_svg_icon(ctx, BACK_ICON);
         let forward_icon = load_svg_icon(ctx, FORWARD_ICON);
         let current_left_tab = LeftTabState::None;
+        let mut toggle=ToggleController::new();
+        toggle.add::<fn(),Basepage>(
+            IconButton::new(ctx, Icon::CLOUD_WITH_BK, ButtonStyle::Menu)
+            .size(egui::vec2(24.0, 24.0))
+            .with_style(&UiStyle::deep_navy(1))  
+            .with_hover_style(&UiStyle::deep_navy(1))
+            .with_click_style(&UiStyle::bright_blue())
+            .tooltip("Data Cloud"),
+            None as Option<fn()>,
+            Some(Rc::new(RefCell::new(Box::new(Basepage::new("Data Cloud")) as Box<dyn TapPage>)))
+        );
+        toggle.add::<fn(),Basepage>(IconButton::new(ctx, Icon::DOCKER, ButtonStyle::Menu)
+        .size(egui::vec2(24.0, 24.0))
+        .with_style(&UiStyle::deep_navy(1))  
+        .with_hover_style(&UiStyle::deep_navy(1))
+        .with_click_style(&UiStyle::bright_blue())
+        .tooltip("Docker Management"),Some(|| println!("Docker Clicked")),Some(Rc::new(RefCell::new(Box::new(Basepage::new("Docker Management")) as Box<dyn TapPage>))));
+        toggle.add::<fn(),Basepage>(IconButton::new(ctx, Icon::CONTROLBAR, ButtonStyle::Menu)
+        .size(egui::vec2(24.0, 24.0))
+        .with_style(&UiStyle::deep_navy(1))  
+        .with_hover_style(&UiStyle::deep_navy(1))
+        .with_click_style(&UiStyle::bright_blue())
+        .tooltip("Control Panel"),None as Option<fn()>,Some(Rc::new(RefCell::new(Box::new(Basepage::new("Control Panel")) as Box<dyn TapPage>))));
+        toggle.add::<fn(),Basepage>(IconButton::new(ctx, Icon::FILE, ButtonStyle::Menu)
+        .size(egui::vec2(24.0, 24.0))
+        .with_style(&UiStyle::deep_navy(1))  
+        .with_hover_style(&UiStyle::deep_navy(1))
+        .with_click_style(&UiStyle::bright_blue())
+        .tooltip("Terminal"),None as Option<fn()>,Some(Rc::new(RefCell::new(Box::new(Basepage::new("Terminal")) as Box<dyn TapPage>))));
+        let subpage=Some(Rc::new(RefCell::new(Box::new(ExplorerPage::new("Terminal")) as Box<dyn TapPage>)));
+        toggle.add::<fn(),Basepage>(IconButton::new(ctx, Icon::FOLDER2, ButtonStyle::Menu)
+        .size(egui::vec2(24.0, 24.0))
+        .with_style(&UiStyle::deep_navy(1))  
+        .with_hover_style(&UiStyle::deep_navy(1))
+        .with_click_style(&UiStyle::bright_blue())
+        .tooltip("Explorer"),None as Option<fn()>,subpage.clone());
+
         
         Self {
             _name: name.to_string(),
@@ -1036,7 +1393,8 @@ impl MainPage {
             back_icon,
             forward_icon,
             current_left_tab,
-           
+            toggle_set:toggle,
+            explorer: subpage.clone(),          
         }
     }
     fn render_top_layer(&mut self, ui: &mut egui::Ui,returnV:&mut PageState) {
@@ -1090,67 +1448,18 @@ impl MainPage {
     fn render_left_top(&mut self, ui : &mut egui::Ui,ctx: &egui::Context) {
         ui.vertical_centered(|ui| {
             ui.label("Memu");
-            ui.separator();
-            // 탭 버튼 UI
+            ui.separator();        
             ui.vertical_centered(|ui| {
-            if IconButton::new(ctx, Icon::CLOUD_WITH_BK, ButtonStyle::Menu)
-            .size(egui::vec2(24.0, 24.0))
-            .with_style(&UiStyle::deep_navy(1))  
-            .with_hover_style(&UiStyle::deep_navy(1))
-            .with_click_style(&UiStyle::bright_blue())
-            .tooltip("Data Cloud")
-            .show(ui)
-            .clicked() 
-        {
-           
-
-        } 
-        if IconButton::new(ctx, Icon::DOCKER, ButtonStyle::Menu)
-        .size(egui::vec2(24.0, 24.0))
-        .with_style(&UiStyle::deep_navy(1))  
-        .with_hover_style(&UiStyle::deep_navy(1))
-        .with_click_style(&UiStyle::bright_blue())
-        .tooltip("Docker Management")
-        .show(ui)
-        .clicked() 
-        {
-        
-
-        } 
-        if IconButton::new(ctx, Icon::CONTROLBAR, ButtonStyle::Menu)
-        .size(egui::vec2(24.0, 24.0))
-        .with_style(&UiStyle::deep_navy(1))  
-        .with_hover_style(&UiStyle::deep_navy(1))
-        .with_click_style(&UiStyle::bright_blue())
-        .tooltip("Control Panel")
-        .show(ui)
-        .clicked() 
-        {
-        
-
-        } 
-        if IconButton::new(ctx, Icon::FILE, ButtonStyle::Menu)
-        .size(egui::vec2(24.0, 24.0))
-        .with_style(&UiStyle::deep_navy(1))  
-        .with_hover_style(&UiStyle::deep_navy(1))
-        .with_click_style(&UiStyle::bright_blue())
-        .tooltip("Terminal")
-        .show(ui)
-        .clicked() 
-        {
-        
-
-        }  
-
-        
-
-
-
-
-
-            });
             
-            ui.separator();
+            self.toggle_set.show(ui,ctx);
+            self.toggle_set.update_page(ui,ctx);
+            });
+        
+        ui.vertical_centered(|ui| {
+            
+
+        });
+        ui.separator();
             
             // 현재 선택된 탭 내용 표시
             match self.current_left_tab {
@@ -1184,15 +1493,22 @@ impl MainPage {
         ui.label("하단레이어");
     }
     
-    fn render_right_top(&mut self, ui: &mut egui::Ui) {
+    fn render_right_top(&mut self, ui: &mut egui::Ui,ctx : &egui::Context) {
+        // 우측 상단 UI 코드
         ui.label("우측 상단");
     }
     
-    fn render_right_bottom(&mut self, ui: &mut egui::Ui) {
-        // 우측 하단 UI 코드
-        ui.label("우측 하단");
+    fn render_right_bottom(&mut self, ui: &mut egui::Ui,ctx : &egui::Context) {
+
+        if let Some(rc_page) = & self.explorer {  // Option 언래핑
+            // RefCell에서 내용물 빌리기
+            let mut page_ref = rc_page.borrow_mut();
+            // 이제 page_ref로 render 메서드 호출
+            page_ref.render(ui, ctx);
+        }
     }
 }
+
 
 
 
@@ -1222,10 +1538,10 @@ impl Page  for MainPage {
                 self.render_left_bottom(ui);
             });
             ui.allocate_new_ui(self.area.right_top.clone(), |ui| {
-                self.render_right_top(ui);
+                self.render_right_top(ui,ctx);
             });
             ui.allocate_new_ui(self.area.right_bottom.clone(), |ui| {
-                self.render_right_bottom(ui);
+                self.render_right_bottom(ui,ctx);
             });
             ui.allocate_new_ui(self.area.bottom_layer.clone(), |ui| {
                 self.render_bottom_layer(ui);

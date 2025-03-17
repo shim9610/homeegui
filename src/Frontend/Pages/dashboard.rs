@@ -1,6 +1,7 @@
 use crate::Frontend::app::{Page, PageState};
 use Rusty_egui::egui::UiBuilder;
 use crate::Frontend::Utility::ui_styles::UiStyle;
+use crate::Frontend::Utility::area_slicer::{AreaSlicer,DefaultAreaSlicer};
 use Rusty_egui::egui;
 use Rusty_egui::eframe;
 use crate::Frontend::Utility::ui_styles::{ContextStyle, WidgetStyle};
@@ -137,8 +138,14 @@ impl TapPage for ExplorerPage{
     }
 
     fn render(&mut self, ui: &mut egui::Ui,ctx: &egui::Context) {
-
-
+        if self.draw{
+            if IconButton::new(ctx, Icon::FOLDER2, ButtonStyle::Explorer)
+            .size(egui::vec2(40.0, 40.0))
+            .tooltip("file1")
+            .show(ui).clicked(){
+                println!("File1 Clicked");
+            }
+        }
     }
     fn clone_page(&self) -> Box<dyn TapPage> {
         Box::new(Self::clone(self))
@@ -306,7 +313,7 @@ impl AreaStructure {
 
 }
 
-pub struct MainPage {
+pub struct MainPage <'a>{
     _name: String,
     _id_field: String,  // 이렇게 필드 추가
     area: AreaStructure,
@@ -319,8 +326,9 @@ pub struct MainPage {
     current_left_tab: LeftTabState,
     toggle_set:ToggleController,
     explorer: Option<Rc<RefCell<Box<dyn TapPage>>>>,
+    slicer : Option<DefaultAreaSlicer<'a>>,
 }
-impl MainPage {
+impl<'a> MainPage <'a>{
     pub fn new(ctx: &egui::Context, name: &str) -> Self 
 
     {
@@ -332,6 +340,7 @@ impl MainPage {
         let forward_icon = load_svg_icon(ctx, FORWARD_ICON);
         let current_left_tab = LeftTabState::None;
         let mut toggle=ToggleController::new();
+        let slicer_n=None;
         toggle.add::<fn(),Basepage>(
             IconButton::new(ctx, Icon::CLOUD_WITH_BK, ButtonStyle::Menu)
             .size(egui::vec2(24.0, 24.0))
@@ -341,6 +350,7 @@ impl MainPage {
             .tooltip("Data Cloud"),
             None as Option<fn()>,
             Some(Rc::new(RefCell::new(Box::new(Basepage::new("Data Cloud")) as Box<dyn TapPage>)))
+
         );
         toggle.add::<fn(),Basepage>(IconButton::new(ctx, Icon::DOCKER, ButtonStyle::Menu)
         .size(egui::vec2(24.0, 24.0))
@@ -380,7 +390,8 @@ impl MainPage {
             forward_icon,
             current_left_tab,
             toggle_set:toggle,
-            explorer: subpage.clone(),          
+            explorer: subpage.clone(), 
+            slicer:slicer_n,         
         }
     }
     fn render_top_layer(&mut self, ui: &mut egui::Ui,returnV:&mut PageState) {
@@ -480,17 +491,40 @@ impl MainPage {
     }
     
     fn render_right_top(&mut self, ui: &mut egui::Ui,ctx : &egui::Context) {
-        if let Some(rc_page) = & self.explorer {  // Option 언래핑
-            // RefCell에서 내용물 빌리기
-            let mut page_ref = rc_page.borrow_mut();
-            // 이제 page_ref로 render 메서드 호출
-            page_ref.render(ui, ctx);
-        }
+        // 우측 상단 UI 코드
+        ui.label("우측 상단");
     }
     
-    fn render_right_bottom(&mut self, ui: &mut egui::Ui) {
-        // 우측 하단 UI 코드
-        ui.label("우측 하단");
+    fn render_right_bottom(&mut self, ui: &mut egui::Ui,ctx : &egui::Context) {
+        if let Some(rc_page) = & self.explorer {
+    
+         // Option 언래핑
+            let ctx_clone = ctx.clone();
+            let mut sliceresult:Vec<Vec<usize>>=Vec::new();
+            let mut value:usize=0;
+            let mut slicer= DefaultAreaSlicer::new();
+            if self.slicer.is_none() {
+                let root_id = slicer.initialize(ui.max_rect());
+                sliceresult = slicer.grid(root_id,20,5);
+                value=sliceresult[3][3];
+               
+            }
+
+            slicer.set_render_fn(value, |ui| {
+                if IconButton::new(ctx, Icon::FOLDER2, ButtonStyle::Explorer)
+                .size(egui::vec2(40.0, 40.0))
+                .tooltip("file1")
+                .show(ui)
+                .clicked()
+                {println!("File1 Clicked");}
+                let mut page_ref = rc_page.borrow_mut();
+                // 이제 page_ref로 render 메서드 호출
+                page_ref.render(ui, &ctx_clone);
+            });
+
+            }
+
+       
     }
 }
 
@@ -499,9 +533,10 @@ impl MainPage {
 
 
 
-impl Page  for MainPage {
+impl<'a> Page  for MainPage<'a> {
 
     fn run(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame)->PageState {
+
         let _ = &ctx.apply_style(&UiStyle::deep_navy(2));
         let mut returnV=PageState::MAIN;
         egui::CentralPanel::default()
@@ -526,7 +561,7 @@ impl Page  for MainPage {
                 self.render_right_top(ui,ctx);
             });
             ui.allocate_new_ui(self.area.right_bottom.clone(), |ui| {
-                self.render_right_bottom(ui);
+                self.render_right_bottom(ui,ctx);
             });
             ui.allocate_new_ui(self.area.bottom_layer.clone(), |ui| {
                 self.render_bottom_layer(ui);
