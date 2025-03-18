@@ -425,7 +425,7 @@ impl<'a> MainPage <'a>{
             
             // 오른쪽 영역: 아이콘들
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            
+                
                 let lock_button = egui::ImageButton::new(
                     egui::load::SizedTexture::new(self.lock_icon.id(), egui::vec2(20.0, 20.0))
                 ).frame(true);  // 프레임(배경) 추가
@@ -500,6 +500,7 @@ impl<'a> MainPage <'a>{
     }
     
     fn render_right_bottom(&mut self, ui: &mut egui::Ui,ctx : &egui::Context) {
+
         if let Some(rc_page) = &self.explorer {
             let ctx_clone = ctx.clone();
             println!("{:?}",ctx_clone.screen_rect());
@@ -521,26 +522,16 @@ impl<'a> MainPage <'a>{
                         let rc_page_clone = Rc::clone(rc_page);
                         let ctx_clone = ctx.clone();
                         new_slicer.set_render_fn(row_id, move |ui| {
-                            // 아이콘 렌더링
-                            ui.add_space(5.0);
-                            ui.horizontal(|ui| {
-                                ui.add_space(5.0);
-                                if IconButton::new(&ctx_clone, Icon::FOLDER2, ButtonStyle::Explorer)
-                                    .size(egui::vec2(32.0, 32.0))
-                                    .tooltip("파일")
-                                    .show(ui)
-                                    .clicked()
-                                {
-                                    println!("파일 클릭됨");
-                                }
-                            });
+                            let mut page_ref = rc_page.borrow_mut();
+                            page_ref.render(ui, &ctx_clone);
+  
                         });
                     }
                 }
-                self.slicer = Some(new_slicer);
+                //self.slicer = Some(new_slicer);
         
             // 슬라이서로 렌더링 실행
-            if let Some(slicer) = &mut self.slicer {
+            if let  Some(mut slicer) = Some(new_slicer) {
                 slicer.render_all(ui);
             }
         }
