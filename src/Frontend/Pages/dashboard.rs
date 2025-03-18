@@ -2,6 +2,7 @@ use crate::Frontend::app::{Page, PageState};
 use Rusty_egui::egui::UiBuilder;
 use crate::Frontend::Utility::ui_styles::UiStyle;
 use crate::Frontend::Utility::area_slicer::{AreaSlicer,DefaultAreaSlicer};
+use crate::Frontend::Utility::area_slicer::SliceDirection;
 use Rusty_egui::egui;
 use Rusty_egui::eframe;
 use crate::Frontend::Utility::ui_styles::{ContextStyle, WidgetStyle};
@@ -235,11 +236,18 @@ impl AreaStructure {
     pub fn _initialize(&mut self, window_rect_no_margin: Rect) {
 
         let margin:f32 = 5.0;
+        let width =window_rect_no_margin.width();
+        let height = window_rect_no_margin.height();
+
         let  window_rect = Rect::from_min_size(
             egui::pos2(window_rect_no_margin.min.x + margin, window_rect_no_margin.min.y + margin),
-            egui::vec2(window_rect_no_margin.width() - margin , window_rect_no_margin.height() - margin )
+            egui::vec2(width - margin , height - margin )
         );
         // 비율 상수들
+        let width_debug =window_rect.width();
+        let height_debug = window_rect.height();
+        println!("Window rect width: {:?}", width_debug);
+        println!("Window rect height: {:?}", height_debug);
         let top_layer_ratio = 0.05;      // 상단 영역 높이 비율
         let bottom_layer_ratio = 0.1;   // 하단 영역 높이 비율
         let left_side_ratio = 0.2;      // 좌측 영역 너비 비율
@@ -378,7 +386,6 @@ impl<'a> MainPage <'a>{
         .with_click_style(&UiStyle::bright_blue())
         .tooltip("Explorer"),None as Option<fn()>,subpage.clone());
 
-        
         Self {
             _name: name.to_string(),
             _id_field: String::new(),
@@ -419,7 +426,6 @@ impl<'a> MainPage <'a>{
             // 오른쪽 영역: 아이콘들
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             
-
                 let lock_button = egui::ImageButton::new(
                     egui::load::SizedTexture::new(self.lock_icon.id(), egui::vec2(20.0, 20.0))
                 ).frame(true);  // 프레임(배경) 추가
@@ -454,7 +460,6 @@ impl<'a> MainPage <'a>{
         
         ui.vertical_centered(|ui| {
             
-
         });
         ui.separator();
             
@@ -479,7 +484,6 @@ impl<'a> MainPage <'a>{
         });
     }
     
-    
     fn render_left_bottom(&mut self, ui: &mut egui::Ui) {
         // 좌측 하단 UI 코드
         ui.label("좌측 하단");
@@ -496,35 +500,50 @@ impl<'a> MainPage <'a>{
     }
     
     fn render_right_bottom(&mut self, ui: &mut egui::Ui,ctx : &egui::Context) {
-        if let Some(rc_page) = & self.explorer {
-    
-         // Option 언래핑
+        if let Some(rc_page) = &self.explorer {
             let ctx_clone = ctx.clone();
-            let mut sliceresult:Vec<Vec<usize>>=Vec::new();
-            let mut value:usize=0;
-            let mut slicer= DefaultAreaSlicer::new();
-            if self.slicer.is_none() {
-                let root_id = slicer.initialize(ui.max_rect());
-                sliceresult = slicer.grid(root_id,20,5);
-                value=sliceresult[3][3];
-               
+            println!("{:?}",ctx_clone.screen_rect());
+            // 슬라이서가 없으면 초기화
+            
+                let mut new_slicer = DefaultAreaSlicer::new();
+                
+                // ui.max_rect() 대신 올바른 영역 사용
+                let right_bottom_rect = ui.max_rect(); // 현재 우하단 UI 영역
+                
+                let root_id = new_slicer.initialize(right_bottom_rect);
+                
+                // 열과 행으로 분할
+                let columns = new_slicer.split_evenly(root_id, SliceDirection::Vertical, 14);
+                // 각 열을 행으로 분할
+                for col_id in columns {
+                    let rows = new_slicer.split_evenly(col_id, SliceDirection::Horizontal, 10);
+                    for row_id in rows {
+                        let rc_page_clone = Rc::clone(rc_page);
+                        let ctx_clone = ctx.clone();
+                        new_slicer.set_render_fn(row_id, move |ui| {
+                            // 아이콘 렌더링
+                            ui.add_space(5.0);
+                            ui.horizontal(|ui| {
+                                ui.add_space(5.0);
+                                if IconButton::new(&ctx_clone, Icon::FOLDER2, ButtonStyle::Explorer)
+                                    .size(egui::vec2(32.0, 32.0))
+                                    .tooltip("파일")
+                                    .show(ui)
+                                    .clicked()
+                                {
+                                    println!("파일 클릭됨");
+                                }
+                            });
+                        });
+                    }
+                }
+                self.slicer = Some(new_slicer);
+        
+            // 슬라이서로 렌더링 실행
+            if let Some(slicer) = &mut self.slicer {
+                slicer.render_all(ui);
             }
-
-            slicer.set_render_fn(value, |ui| {
-                if IconButton::new(ctx, Icon::FOLDER2, ButtonStyle::Explorer)
-                .size(egui::vec2(40.0, 40.0))
-                .tooltip("file1")
-                .show(ui)
-                .clicked()
-                {println!("File1 Clicked");}
-                let mut page_ref = rc_page.borrow_mut();
-                // 이제 page_ref로 render 메서드 호출
-                page_ref.render(ui, &ctx_clone);
-            });
-
-            }
-
-       
+        }
     }
 }
 
@@ -536,7 +555,10 @@ impl<'a> MainPage <'a>{
 impl<'a> Page  for MainPage<'a> {
 
     fn run(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame)->PageState {
-
+        self.area=AreaStructure::new();
+        let full_rect =ctx.screen_rect();
+        self.area._initialize(full_rect);
+        println!("Screen rect inside: {:?}", full_rect);
         let _ = &ctx.apply_style(&UiStyle::deep_navy(2));
         let mut returnV=PageState::MAIN;
         egui::CentralPanel::default()
@@ -545,8 +567,8 @@ impl<'a> Page  for MainPage<'a> {
             inner_margin: Rusty_egui::egui::Margin::same(25.0),
         ..Default::default()
         }).apply_style(&UiStyle::dark_blue()).show(ctx, |ui| {
-            let full_rect = ui.max_rect();
-            self.area._initialize(full_rect);
+            //let full_rect = ui.max_rect();
+            //self.area._initialize(full_rect);
 
             ui.allocate_new_ui(self.area.top_layer.clone(), |ui| {
                 self.render_top_layer(ui,&mut returnV);
@@ -566,8 +588,6 @@ impl<'a> Page  for MainPage<'a> {
             ui.allocate_new_ui(self.area.bottom_layer.clone(), |ui| {
                 self.render_bottom_layer(ui);
             });
-       
-       
 
     }
     );

@@ -60,9 +60,23 @@ impl App for MyApp {
                 self.State = nstate;
             }
             PageState::MAIN => {
-                ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(1500.0, 900.0)));
+                let setx=1500.0;
+                let sety=900.0;
+                ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(setx, sety)));
+                let screen_rect = ctx.screen_rect();
+                //let screen_width = screen_rect.width();
+                //let screen_height = screen_rect.height();
+                
+                //if screen_width==setx && screen_height==sety{
                 let nstate: PageState=self.Main.run( ctx, frame);
                 self.State = nstate;
+                //}
+                //else{
+                    println!("Screen rect: {:?}", ctx.screen_rect());
+                    println!("Available rect: {:?}", ctx.available_rect());    
+                //    println!("Screen size is not set to 1500x900");
+                //}
+
             }
             PageState::FILE => {
                 //self.File.run();
