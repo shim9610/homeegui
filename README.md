@@ -74,6 +74,8 @@ animation_manager.show_notification(
     Duration::from_secs(3)
 );
 ```
+스케줄러 추가
+DB sql 비스무리한거
 
 ## 4. 영역 슬라이서
 

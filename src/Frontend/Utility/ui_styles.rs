@@ -1,4 +1,5 @@
 use Rusty_egui::egui::Color32;
+use Rusty_egui::egui;
 use std::default::Default;
 
 
@@ -128,5 +129,47 @@ impl WidgetStyle for Rusty_egui::egui::CentralPanel {
             .fill(style.background)
             .stroke(Rusty_egui::egui::Stroke::new(1.0, style.border)))
         
+    }
+}
+
+
+/// 빈 UI 영역을 기본 배경으로 렌더링하는 구조체
+pub struct EmptyRenderer {
+    style: UiStyle,
+    message: Option<String>,
+}
+
+impl EmptyRenderer {
+    pub fn new(style: UiStyle) -> Self {
+        Self {
+            style,
+            message: None,
+        }
+    }
+    
+    pub fn with_message(mut self, message: impl Into<String>) -> Self {
+        self.message = Some(message.into());
+        self
+    }
+    
+    /// UI 영역에 기본 배경과 선택적 메시지를 렌더링
+    pub fn render(&self, ui: &mut egui::Ui) {
+        // 배경 그리기
+        let rect = ui.max_rect();
+        ui.painter().rect_filled(
+            rect,
+            0.0,  // 라운딩 없음
+            self.style.background,
+        );
+        
+        // 메시지가 있으면 표시
+        if let Some(msg) = &self.message {
+            ui.vertical_centered(|ui| {
+                ui.add_space(rect.height() * 0.4);  // 수직 중앙 근처에 배치
+                ui.label(egui::RichText::new(msg)
+                    .color(self.style.text)
+                    .size(16.0));
+            });
+        }
     }
 }

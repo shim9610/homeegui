@@ -344,21 +344,12 @@ impl IconButton {
             },
             ButtonStyle::Explorer => {
                 let text = match &self.tooltip {
-                    Some(text) => {
-                       //println!("{}", text);
-                        text.as_str()
-                    },
-                    None => {
-                        //println!("No tooltip");
-                        "No tooltip"
-                    }
+                    Some(text) => text.as_str(),
+                    None => "No tooltip"
                 };
-            
+                
                 let (rect, response) = ui.allocate_at_least(self.size, egui::Sense::click());
-            
-                // 배경 투명
-                // ui.painter().rect_filled(rect, 0.0, egui::Color32::TRANSPARENT);
-            
+                
                 // 아이콘 그리기
                 let icon_pos = egui::pos2(
                     rect.center().x - (self.size.x * 0.5),
@@ -370,25 +361,87 @@ impl IconButton {
                     egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
                     egui::Color32::WHITE,
                 );
-            
-                // ★추가★ 텍스트(파일명) 표시:
-                //    아이콘 아래 / 위 원하는 곳에 그리기
-                let text_pos = egui::pos2(
-                    rect.center().x - 20.0,
-                    rect.center().y + (self.size.y * 0.4), // 아이콘 하단 아래쪽
-                );
-                ui.painter().text(
-                    text_pos,
-                    egui::Align2::LEFT_TOP,
-                    text,
-                    egui::FontId::proportional(14.0),
+                
+                // 텍스트 처리
+                // 텍스트 처리
+                let max_width = 80.0;  // 최대 너비 제한
+
+                // 먼저 최대 너비로 텍스트 레이아웃 생성
+                let text_galley = ui.painter().layout(
+                    text.to_string(),
+                    egui::FontId::proportional(10.0),
                     egui::Color32::WHITE,
+                    max_width
                 );
-            
+
+                // 행 수 확인 및 제한
+                let display_text = if text_galley.rows.len() > 2 {
+                    // 첫 두 줄의 텍스트 추출을 시도
+                    // Row 구조체의 public 메서드들만 사용
+                    
+                    // 대안: 전체 텍스트를 2줄 높이에 맞게 자르기
+                    let font_height = 10.0; // 대략적인 행 높이
+                    let display_galley = ui.painter().layout(
+                        text.to_string(),
+                        egui::FontId::proportional(10.0),
+                        egui::Color32::WHITE,
+                        max_width
+                    );
+                    
+                    // 2줄까지만 표시
+                    if display_galley.rows.len() > 2 {
+                        let mut result = String::new();
+                        let mut chars_added = 0;
+                        
+                        // 첫 2줄에 해당하는 글자 수 계산
+                        for (i, row) in display_galley.rows.iter().take(2).enumerate() {
+                            // Row에서 직접 텍스트를 추출할 수 없으므로
+                            // 글자 위치를 추정
+                            let row_chars = if i == 0 {
+                                // 첫 번째 줄
+                                row.glyphs.len()
+                            } else {
+                                // 두 번째 줄
+                                row.glyphs.len() + chars_added
+                            };
+                            chars_added = row_chars;
+                        }
+                        
+                        // 추정한 글자 수만큼 원본 텍스트에서 가져오기
+                        if chars_added > 0 && chars_added < text.chars().count() {
+                            let truncated: String = text.chars().take(chars_added).collect();
+                            format!("{}...", truncated)
+                        } else {
+                            text.to_string()
+                        }
+                    } else {
+                        text.to_string()
+                    }
+                } else {
+                    text.to_string()
+                };
+
+                // 최종 텍스트 표시
+                let final_galley = ui.painter().layout(
+                    display_text,
+                    egui::FontId::proportional(10.0),
+                    egui::Color32::WHITE,
+                    max_width
+                );
+
+                // 텍스트 위치 (중앙 정렬)
+                let text_pos = egui::pos2(
+                    rect.center().x - final_galley.rect.width() / 2.0,
+                    rect.center().y + (self.size.y * 0.6)
+                );
+
+                // 텍스트 그리기
+                ui.painter().galley(text_pos, final_galley, egui::Color32::WHITE);
+                                
                 if response.clicked() {
                     println!("Explorer style icon clicked: {}", text);
                 }
-            
+                
                 response
             }
             ButtonStyle::Menu => {
@@ -557,6 +610,7 @@ pub trait TapPage {
     fn render(&mut self, ui: &mut egui::Ui,ctx: &egui::Context);
     fn clone_page(&self) -> Box<dyn TapPage>; // Clone 대신 사용
     fn activate(&mut self);
+    fn deactivate(&mut self);
 }
 
 pub struct ToggleController {
@@ -607,17 +661,35 @@ impl ToggleController {
         self.index=index;
     }
     fn call_toggle(&mut self,id:usize,ui: &mut egui::Ui,ctx: &egui::Context){
+        
+        
+        
         if !self.removed.contains(&id) && self.buttons.len()>id {
         for i in 0..self.selected.len() {
+            let page_option = &self.pages[i];
             self.selected[i] = false;
             self.buttons[i]=self.buttons[i].clone().with_style(&UiStyle::deep_navy(1));
-        
-        
+            if let Some(page_rc) = page_option {
+                if let Ok(mut page_ref) = page_rc.try_borrow_mut() {
+                    page_ref.deactivate();
+                }
+                else{
+                    print!("Page is already borrowed mutably");
+                }
+            }       
         }
         self.selected[id]=true;
         self.buttons[id]=self.buttons[id].clone().with_style(&UiStyle::bright_blue());
-        
-        }
+        let page_option = &self.pages[id];
+        if let Some(page_rc) = page_option {
+            if let Ok(mut page_ref) = page_rc.try_borrow_mut() {
+                page_ref.activate();
+            }
+            else{
+                print!("Page is already borrowed mutably");
+            }
+        } 
+    }
     }
     pub fn update_page(&mut self, ui: &mut egui::Ui, ctx: &egui::Context) {
         if let Some(selected_idx) = self.selected.iter().position(|&selected| selected) {
@@ -634,6 +706,7 @@ impl ToggleController {
             }
         }
     }
+
 
     
     fn show_button(&mut self, id: usize, ui: &mut egui::Ui,ctx:&egui::Context ) -> Option<egui::Response> 

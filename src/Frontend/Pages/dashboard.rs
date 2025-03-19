@@ -1,6 +1,6 @@
 use crate::Frontend::app::{Page, PageState};
 use Rusty_egui::egui::UiBuilder;
-use crate::Frontend::Utility::ui_styles::UiStyle;
+use crate::Frontend::Utility::ui_styles::{UiStyle,EmptyRenderer};
 use crate::Frontend::Utility::area_slicer::{AreaSlicer,DefaultAreaSlicer};
 use crate::Frontend::Utility::area_slicer::SliceDirection;
 use Rusty_egui::egui;
@@ -142,9 +142,9 @@ impl TapPage for ExplorerPage{
         if self.draw{
             if IconButton::new(ctx, Icon::FOLDER2, ButtonStyle::Explorer)
             .size(egui::vec2(40.0, 40.0))
-            .tooltip("file1")
+            .tooltip("그런데 파일 이름이 길어지면 어디서 줄이 바뀌지?>.,.,.ㄹ이아루니아룬이라누이라ㅜ")
             .show(ui).clicked(){
-                println!("File1 Clicked");
+
             }
         }
     }
@@ -154,6 +154,10 @@ impl TapPage for ExplorerPage{
     fn activate(&mut self) {
         self.draw=true;
     }
+    fn deactivate(&mut self) {
+        self.draw=false;
+    }
+
     
 }
 impl ExplorerPage{
@@ -200,6 +204,9 @@ impl TapPage for Basepage{
     }
     fn activate(&mut self) {
         self.draw=true;
+    }
+    fn deactivate(&mut self) {
+        self.draw=false;
     }
 }
 
@@ -455,7 +462,7 @@ impl<'a> MainPage <'a>{
             ui.vertical_centered(|ui| {
             
             self.toggle_set.show(ui,ctx);
-            self.toggle_set.update_page(ui,ctx);
+            //self.toggle_set.update_page(ui,ctx);
             });
         
         ui.vertical_centered(|ui| {
@@ -502,10 +509,11 @@ impl<'a> MainPage <'a>{
     fn render_right_bottom(&mut self, ui: &mut egui::Ui,ctx : &egui::Context) {
 
         if let Some(rc_page) = &self.explorer {
+            
             let ctx_clone = ctx.clone();
             println!("{:?}",ctx_clone.screen_rect());
-            // 슬라이서가 없으면 초기화
-            
+            //let initializer  =EmptyRenderer::new(UiStyle::dark_blue());
+            //initializer.render(ui);
                 let mut new_slicer = DefaultAreaSlicer::new();
                 
                 // ui.max_rect() 대신 올바른 영역 사용
@@ -514,10 +522,10 @@ impl<'a> MainPage <'a>{
                 let root_id = new_slicer.initialize(right_bottom_rect);
                 
                 // 열과 행으로 분할
-                let columns = new_slicer.split_evenly(root_id, SliceDirection::Vertical, 14);
+                let columns = new_slicer.split_evenly(root_id, SliceDirection::Vertical, 7);
                 // 각 열을 행으로 분할
                 for col_id in columns {
-                    let rows = new_slicer.split_evenly(col_id, SliceDirection::Horizontal, 10);
+                    let rows = new_slicer.split_evenly(col_id, SliceDirection::Horizontal, 7);
                     for row_id in rows {
                         let rc_page_clone = Rc::clone(rc_page);
                         let ctx_clone = ctx.clone();
