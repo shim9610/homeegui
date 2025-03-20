@@ -1,7 +1,7 @@
 use crate::Frontend::app::{Page, PageState};
 use Rusty_egui::egui::UiBuilder;
 use crate::Frontend::Utility::ui_styles::{UiStyle,EmptyRenderer};
-use crate::Frontend::Utility::area_slicer::{AreaSlicer,DefaultAreaSlicer};
+use crate::Frontend::Utility::area_slicer::{AreaSlicer,DefaultAreaSlicer,FileSlicer};
 use crate::Frontend::Utility::area_slicer::SliceDirection;
 use Rusty_egui::egui;
 use Rusty_egui::eframe;
@@ -507,52 +507,26 @@ impl<'a> MainPage <'a>{
     }
     
     fn render_right_bottom(&mut self, ui: &mut egui::Ui,ctx : &egui::Context) {
-
-        if let Some(rc_page) = &self.explorer {
-            
+            //let ctx_clone = ctx.clone();
+            //println!("{:?}",ctx_clone.screen_rect());
+            let right_bottom_rect = ui.max_rect(); // 현재 우하단 UI 영역
+            let mut file = FileSlicer::new(40.0,80.0,50.0,20.0,right_bottom_rect);
+            file.set_number_of_grid();
             let ctx_clone = ctx.clone();
-            println!("{:?}",ctx_clone.screen_rect());
-            //let initializer  =EmptyRenderer::new(UiStyle::dark_blue());
-            //initializer.render(ui);
-                let mut new_slicer = DefaultAreaSlicer::new();
-                
-                // ui.max_rect() 대신 올바른 영역 사용
-                let right_bottom_rect = ui.max_rect(); // 현재 우하단 UI 영역
-                
-                let root_id = new_slicer.initialize(right_bottom_rect);
-                
-                // 열과 행으로 분할
-                let columns = new_slicer.split_evenly(root_id, SliceDirection::Vertical, 7);
-                // 각 열을 행으로 분할
-                for col_id in columns {
-                    let rows = new_slicer.split_evenly(col_id, SliceDirection::Horizontal, 7);
-                    for row_id in rows {
-                        let rc_page_clone = Rc::clone(rc_page);
-                        let ctx_clone = ctx.clone();
-                        new_slicer.set_render_fn(row_id, move |ui| {
-                            let mut page_ref = rc_page.borrow_mut();
-                            page_ref.render(ui, &ctx_clone);
-  
-                        });
-                    }
+            for _i in 0..40 {
+                let ctx_inner_clone = ctx_clone.clone();
+                if let Some(rc_page) = &self.explorer {
+                    let rc_page_clone = rc_page.clone();  // Rc 복제
+                    file.add_file(ui, move |ui_param| {
+                        let mut page_ref = rc_page_clone.borrow_mut();  // 클로저 내부에서 borrow_mut
+                        page_ref.render(ui_param, &ctx_inner_clone);
+                    });
                 }
-                //self.slicer = Some(new_slicer);
-        
-            // 슬라이서로 렌더링 실행
-            if let  Some(mut slicer) = Some(new_slicer) {
-                slicer.render_all(ui);
             }
-        }
     }
 }
 
-
-
-
-
-
 impl<'a> Page  for MainPage<'a> {
-
     fn run(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame)->PageState {
         self.area=AreaStructure::new();
         let full_rect =ctx.screen_rect();

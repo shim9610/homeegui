@@ -264,3 +264,136 @@ impl<'a> AreaSlicer<'a> for DefaultAreaSlicer<'a>{
     }
 
 }
+#[derive(Clone)]
+struct XYindex{
+    xindex:usize,
+    yindex:usize,
+}
+struct Indexer{
+    len:usize,
+    xyindex:XYindex,
+    width:usize,
+    height:usize,
+}
+impl Indexer{
+    fn new(len:usize,width:usize,height:usize)->Self{
+        Self{
+            len,
+            xyindex:XYindex{xindex:0,yindex:0,},
+            width,
+            height,
+        }
+    }
+    fn set_index(&mut self,index:usize)->XYindex{
+        self.len=index;
+        let xindex = index % self.width;
+        let yindex = index / self.width;
+        self.xyindex = XYindex{xindex,yindex}.clone();
+        XYindex{xindex,yindex}
+    }
+}
+// 파일 전용 슬라이서 구조체
+pub struct FileSlicer <'a>{
+    defaultareaslicer: DefaultAreaSlicer<'a>,
+    margin: f32,
+    file_height: f32,
+    file_width: f32,
+    distance: f32,
+    width: f32,
+    height: f32,
+    rows: usize,
+    cols: usize,
+    maxnum:usize,
+    addnum:usize,
+    index:Indexer,
+    root_id:usize,
+    grid: Vec<Vec<usize>>,
+    
+}
+impl <'a> FileSlicer<'a>{
+    pub fn new(margin: f32,file_width:f32 ,file_height: f32,distance:f32,root_rect: Rect  ) -> Self {
+        let mut data=DefaultAreaSlicer::new();
+        let root_id=data.initialize(root_rect);
+        let width=root_rect.width();
+        let height=root_rect.height();
+        let rows:usize =0;
+        let cols:usize =0;
+        let maxnum:usize=0;
+        let addnum:usize=0;
+        let index=Indexer::new(0,width as usize,height as usize);
+        let grid: Vec<Vec<usize>>=Vec::new();
+        Self {
+            defaultareaslicer: data,
+            margin,
+            distance,
+            file_width,
+            file_height,
+            width,
+            height,
+            rows,
+            cols,
+            maxnum,
+            addnum,
+            index,
+            root_id,
+            grid,
+        }
+    }
+    pub fn set_number_of_grid(&mut self){
+        self.cols =((self.width-self.distance-self.margin*2.0)/(self.file_width+self.distance)).round() as usize;
+        self.rows =((self.height-self.distance-self.margin*2.0)/(self.file_height+self.distance)).round()as usize;
+        self.maxnum=self.cols*self.rows;
+        let rario_columns=self.margin as f32/self.width as f32 ;
+        let input_ratio:[f32;3]=[rario_columns,(1.0-rario_columns*1.2),rario_columns*0.2];
+        let columns = self.defaultareaslicer.slice(self.root_id,SliceDirection::Vertical,&input_ratio);
+        let rario_row=self.margin as f32/self.height as f32 ;
+        let input_ratio_r:[f32;3]=[rario_row,(1.0-rario_row*1.2),rario_row*0.2];
+        let row = self.defaultareaslicer.slice(columns[1],SliceDirection::Vertical,&input_ratio_r);
+        self.root_id=row[1];
+    }
+    pub fn get_grid(&mut self){
+        self.grid=self.defaultareaslicer.grid(self.root_id,self.rows,self.cols);
+    }
+    pub fn add_file<F>(&mut self, ui: &mut egui::Ui, mut fun: F)
+    where
+        F: FnMut(&mut Ui) + 'a,
+    {
+        // 먼저 그리드 크기 계산
+
+
+
+        self.get_grid();
+        // 그리드 초기화
+
+            
+
+        
+        // 여기서 그리드 유효성 검사
+        if self.grid.is_empty() || self.addnum >= self.maxnum {
+            println!("Grid is empty or maximum items reached.");
+            return;
+        }
+        self.index.height=self.grid.len();
+        self.index.width=self.grid[0].len();
+        let id = self.index.set_index(self.addnum);
+        
+        // 범위 검사 추가
+        if id.yindex >= self.grid.len() || id.xindex >= self.grid[0].len() {
+            println!("Index out of bounds: yindex={}, xindex={}, grid={}x{}", 
+                     id.yindex, id.xindex, self.grid.len(), 
+                     if self.grid.is_empty() { 0 } else { self.grid[0].len() });
+            return;
+        }
+        
+        let values = self.grid[id.yindex][id.xindex];
+        self.defaultareaslicer.set_render_fn(values, move |ui| {
+            fun(ui);
+        });
+        
+        self.defaultareaslicer.render_all(ui);
+        self.addnum += 1;
+    }
+
+
+
+}
