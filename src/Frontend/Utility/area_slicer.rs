@@ -343,10 +343,10 @@ impl <'a> FileSlicer<'a>{
         self.cols =((self.width-self.distance-self.margin*2.0)/(self.file_width+self.distance)).round() as usize;
         self.rows =((self.height-self.distance-self.margin*2.0)/(self.file_height+self.distance)).round()as usize;
         self.maxnum=self.cols*self.rows;
-        let rario_columns=self.margin as f32/self.width as f32 ;
+        let rario_columns=self.margin/self.width ;
         let input_ratio:[f32;3]=[rario_columns,(1.0-rario_columns*1.2),rario_columns*0.2];
         let columns = self.defaultareaslicer.slice(self.root_id,SliceDirection::Vertical,&input_ratio);
-        let rario_row=self.margin as f32/self.height as f32 ;
+        let rario_row=self.margin/self.height ;
         let input_ratio_r:[f32;3]=[rario_row,(1.0-rario_row*1.2),rario_row*0.2];
         let row = self.defaultareaslicer.slice(columns[1],SliceDirection::Vertical,&input_ratio_r);
         self.root_id=row[1];

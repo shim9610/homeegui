@@ -4,8 +4,7 @@ use resvg;
 use egui::ColorImage;
 use Rusty_egui::image::{ImageBuffer, Rgba};
 use tiny_skia;
-use std::collections::HashMap;
-use crate::Frontend::Utility::ui_styles::{UiStyle,ContextStyle};
+use crate::Frontend::Utility::ui_styles::UiStyle;
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -224,7 +223,7 @@ fn load_svg_as_color_image(svg_bytes: &[u8]) -> egui::ColorImage {
     let rtree = Tree::from_data(svg_bytes, &options).expect("SVG 파싱 실패");
 
     let pixmap_size = rtree.size().to_int_size();
-    let (w, h) = (pixmap_size.width() as u32, pixmap_size.height() as u32);
+    let (w, h) = (pixmap_size.width(), pixmap_size.height());
 
     let mut pixmap = tiny_skia::Pixmap::new(w, h).unwrap();
 
@@ -390,7 +389,7 @@ impl IconButton {
                     
                     // 2줄까지만 표시
                     if display_galley.rows.len() > 2 {
-                        let mut result = String::new();
+                        let result = String::new();
                         let mut chars_added = 0;
                         
                         // 첫 2줄에 해당하는 글자 수 계산
@@ -654,7 +653,7 @@ impl ToggleController {
             self.index=self.buttons.len();
             
         }
-        self.index.clone()
+        self.index
     }
     pub fn remove(&mut self, index:usize) {
         self.removed.push(index);

@@ -1,9 +1,7 @@
 use crate::Frontend::app::{Page, PageState};
-use crate::Frontend::Utility::event_manager::{PointScanner};
 use Rusty_egui::egui::UiBuilder;
-use crate::Frontend::Utility::ui_styles::{UiStyle,EmptyRenderer};
-use crate::Frontend::Utility::area_slicer::{AreaSlicer,DefaultAreaSlicer,FileSlicer};
-use crate::Frontend::Utility::area_slicer::SliceDirection;
+use crate::Frontend::Utility::ui_styles::UiStyle;
+use crate::Frontend::Utility::area_slicer::{DefaultAreaSlicer,FileSlicer};
 use Rusty_egui::egui;
 use Rusty_egui::eframe;
 use crate::Frontend::Utility::ui_styles::{ContextStyle, WidgetStyle};
@@ -16,13 +14,11 @@ use Rusty_egui::image::{ImageBuffer, Rgba};
 use tiny_skia;
 use std::rc::Rc;
 use std::cell::RefCell;
-use Rusty_egui::egui::Pos2;
 const LOCK_ICON: &[u8] = include_bytes!("icon/lock.svg");
 const SETTINGS_ICON: &[u8] = include_bytes!("icon/setting.svg");
 const PLAY_ICON: &[u8] = include_bytes!("icon/Play Arrow.svg");
 const BACK_ICON: &[u8] = include_bytes!("icon/back.svg");
 const FORWARD_ICON: &[u8] = include_bytes!("icon/Forward.svg");
-use std::collections::HashMap;
 
 
 struct FILEINFO{
@@ -48,7 +44,7 @@ impl Filesystem{
         }
     }
     fn add_file(&mut self,mut file: FileData){
-        self.current_index=self.current_index+1;
+        self.current_index += 1;
         file.index=self.current_index;
         self.file_list.push(file);
     }
@@ -108,7 +104,7 @@ fn load_svg_as_color_image(svg_bytes: &[u8]) -> egui::ColorImage {
     let rtree = Tree::from_data(svg_bytes, &options).expect("SVG 파싱 실패");
 
     let pixmap_size = rtree.size().to_int_size();
-    let (w, h) = (pixmap_size.width() as u32, pixmap_size.height() as u32);
+    let (w, h) = (pixmap_size.width(), pixmap_size.height());
 
     let mut pixmap = tiny_skia::Pixmap::new(w, h).unwrap();
 
@@ -141,13 +137,11 @@ impl TapPage for ExplorerPage{
     }
 
     fn render(&mut self, ui: &mut egui::Ui,ctx: &egui::Context) {
-        if self.draw{
-            if IconButton::new(ctx, Icon::FOLDER2, ButtonStyle::Explorer)
+        if self.draw && IconButton::new(ctx, Icon::FOLDER2, ButtonStyle::Explorer)
             .size(egui::vec2(40.0, 40.0))
             .tooltip("그런데 파일 이름이 길어지면 어디서 줄이 바뀌지?>.,.,.ㄹ이아루니아룬이라누이라ㅜ")
-            .show(ui).clicked(){
+            .show(ui).clicked() {
 
-            }
         }
     }
     fn clone_page(&self) -> Box<dyn TapPage> {
@@ -346,7 +340,7 @@ pub struct MainPage <'a>{
     slicer : Option<DefaultAreaSlicer<'a>>,
 
 }
-impl<'a> MainPage <'a>{
+impl MainPage <'_>{
     pub fn new(ctx: &egui::Context, name: &str) -> Self 
 
     {
@@ -531,7 +525,7 @@ impl<'a> MainPage <'a>{
     }
 }
 
-impl<'a> Page  for MainPage<'a> {
+impl Page  for MainPage<'_> {
     fn run(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame)->PageState {
 
         self.area=AreaStructure::new();

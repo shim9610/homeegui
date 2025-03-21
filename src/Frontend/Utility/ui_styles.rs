@@ -114,7 +114,7 @@ impl WidgetStyle for Rusty_egui::egui::TopBottomPanel {
         
     }
 }
-impl <'a> WidgetStyle for Rusty_egui::egui::Button<'a> {
+impl  WidgetStyle for Rusty_egui::egui::Button<'_> {
     fn apply_style(self, style: &UiStyle) -> Self{
         // 기존 타입을 확장하는 구현
         self.fill(style.background)

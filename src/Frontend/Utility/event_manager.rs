@@ -1,6 +1,5 @@
 use Rusty_egui::egui::PointerState;
 use Rusty_egui::egui;
-use Rusty_egui::egui::Modifiers;
 
 use Rusty_egui::egui::Pos2;
 
@@ -62,7 +61,7 @@ impl PointScanner{
             }
             
         }
-        return None
+        None
     }
     fn info(&mut self,inpos:Pos2)->DragAndDrop{
         self.output=DragAndDrop{

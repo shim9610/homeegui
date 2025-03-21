@@ -21,12 +21,12 @@ pub trait Page{
 
 
 pub struct MyApp {
-    Login :Box<dyn Page>,
-    Main :Box<dyn Page>,
-    File :Box<dyn Page>,
-    Moniter :Box<dyn Page>,
-    MakeAccountPage : Box<dyn Page>,
-    State : PageState,
+    login :Box<dyn Page>,
+    main :Box<dyn Page>,
+    file :Box<dyn Page>,
+    moniter :Box<dyn Page>,
+    make_account_page : Box<dyn Page>,
+    state : PageState,
     mouse_interactor : PointScanner,
 
     
@@ -38,12 +38,12 @@ impl MyApp  {
         Rusty_egui::replace_fonts(&_cc.egui_ctx);
         let mouse = PointScanner::new();
         Self {
-            Login: Box::new(LoginPage::new("Login")),
-            Main: Box::new(MainPage::new(&_cc.egui_ctx,"Main")),
-            File: Box::new(LoginPage::new("File")),
-            Moniter: Box::new(LoginPage::new("Moniter")),
-            MakeAccountPage: Box::new(MakeAccountPage::new("MakeAccount")),
-            State: PageState::LOGIN,
+            login: Box::new(LoginPage::new("Login")),
+            main: Box::new(MainPage::new(&_cc.egui_ctx,"Main")),
+            file: Box::new(LoginPage::new("File")),
+            moniter: Box::new(LoginPage::new("Moniter")),
+            make_account_page: Box::new(MakeAccountPage::new("MakeAccount")),
+            state: PageState::LOGIN,
             mouse_interactor:mouse,
         }
     }
@@ -58,11 +58,11 @@ impl App for MyApp {
         if let Some(prdata)=drag_info{
         println!("드래그앤 드롭 인식 디버그{:?}",prdata);
         }
-        match self.State {
+        match self.state {
             PageState::LOGIN => {
                 ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(500.0, 350.0)));
-                let nstate=self.Login.run( ctx, frame);
-                self.State = nstate;
+                let nstate=self.login.run( ctx, frame);
+                self.state = nstate;
             }
             PageState::MAIN => {
                 let setx=1500.0;
@@ -73,8 +73,8 @@ impl App for MyApp {
                 //let screen_height = screen_rect.height();
                 
                 //if screen_width==setx && screen_height==sety{
-                let nstate: PageState=self.Main.run( ctx, frame);
-                self.State = nstate;
+                let nstate: PageState=self.main.run( ctx, frame);
+                self.state = nstate;
                 //}
                 //else{
                    // println!("Screen rect: {:?}", ctx.screen_rect());
@@ -91,8 +91,8 @@ impl App for MyApp {
             }
             PageState::MAKEACCOUNT => {
                 ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(850.0, 450.0)));
-                let nstate= self.MakeAccountPage.run( ctx, frame);
-                self.State = nstate;
+                let nstate= self.make_account_page.run( ctx, frame);
+                self.state = nstate;
             }
         }
 
