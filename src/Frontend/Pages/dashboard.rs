@@ -1,4 +1,5 @@
 use crate::Frontend::app::{Page, PageState};
+use crate::Frontend::Utility::event_manager::{PointScanner};
 use Rusty_egui::egui::UiBuilder;
 use crate::Frontend::Utility::ui_styles::{UiStyle,EmptyRenderer};
 use crate::Frontend::Utility::area_slicer::{AreaSlicer,DefaultAreaSlicer,FileSlicer};
@@ -15,6 +16,7 @@ use Rusty_egui::image::{ImageBuffer, Rgba};
 use tiny_skia;
 use std::rc::Rc;
 use std::cell::RefCell;
+use Rusty_egui::egui::Pos2;
 const LOCK_ICON: &[u8] = include_bytes!("icon/lock.svg");
 const SETTINGS_ICON: &[u8] = include_bytes!("icon/setting.svg");
 const PLAY_ICON: &[u8] = include_bytes!("icon/Play Arrow.svg");
@@ -253,8 +255,8 @@ impl AreaStructure {
         // 비율 상수들
         let width_debug =window_rect.width();
         let height_debug = window_rect.height();
-        println!("Window rect width: {:?}", width_debug);
-        println!("Window rect height: {:?}", height_debug);
+        //println!("Window rect width: {:?}", width_debug);
+        //println!("Window rect height: {:?}", height_debug);
         let top_layer_ratio = 0.05;      // 상단 영역 높이 비율
         let bottom_layer_ratio = 0.1;   // 하단 영역 높이 비율
         let left_side_ratio = 0.2;      // 좌측 영역 너비 비율
@@ -342,6 +344,7 @@ pub struct MainPage <'a>{
     toggle_set:ToggleController,
     explorer: Option<Rc<RefCell<Box<dyn TapPage>>>>,
     slicer : Option<DefaultAreaSlicer<'a>>,
+
 }
 impl<'a> MainPage <'a>{
     pub fn new(ctx: &egui::Context, name: &str) -> Self 
@@ -356,6 +359,7 @@ impl<'a> MainPage <'a>{
         let current_left_tab = LeftTabState::None;
         let mut toggle=ToggleController::new();
         let slicer_n=None;
+
         toggle.add::<fn(),Basepage>(
             IconButton::new(ctx, Icon::CLOUD_WITH_BK, ButtonStyle::Menu)
             .size(egui::vec2(24.0, 24.0))
@@ -405,7 +409,8 @@ impl<'a> MainPage <'a>{
             current_left_tab,
             toggle_set:toggle,
             explorer: subpage.clone(), 
-            slicer:slicer_n,         
+            slicer:slicer_n, 
+
         }
     }
     fn render_top_layer(&mut self, ui: &mut egui::Ui,returnV:&mut PageState) {
@@ -528,10 +533,11 @@ impl<'a> MainPage <'a>{
 
 impl<'a> Page  for MainPage<'a> {
     fn run(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame)->PageState {
+
         self.area=AreaStructure::new();
         let full_rect =ctx.screen_rect();
         self.area._initialize(full_rect);
-        println!("Screen rect inside: {:?}", full_rect);
+        //println!("Screen rect inside: {:?}", full_rect);
         let _ = &ctx.apply_style(&UiStyle::deep_navy(2));
         let mut returnV=PageState::MAIN;
         egui::CentralPanel::default()

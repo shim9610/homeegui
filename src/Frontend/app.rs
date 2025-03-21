@@ -3,6 +3,7 @@ use Rusty_egui::egui;
 use Rusty_egui::eframe::{App, CreationContext};
 use crate::Frontend::Pages::login::{LoginPage,MakeAccountPage};
 use crate::Frontend::Pages::dashboard::MainPage;
+use crate::Frontend::Utility::event_manager::PointScanner;
 pub enum PageState {
     LOGIN,
     MAIN,
@@ -10,7 +11,6 @@ pub enum PageState {
     MONITER,
     MAKEACCOUNT,
 }
-
 pub trait Page{
     fn run(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame)->PageState;
     // 추가로 유용한 메서드들:
@@ -27,6 +27,7 @@ pub struct MyApp {
     Moniter :Box<dyn Page>,
     MakeAccountPage : Box<dyn Page>,
     State : PageState,
+    mouse_interactor : PointScanner,
 
     
 
@@ -35,6 +36,7 @@ pub struct MyApp {
 impl MyApp  {
     pub fn new(_cc: &CreationContext) -> Self {
         Rusty_egui::replace_fonts(&_cc.egui_ctx);
+        let mouse = PointScanner::new();
         Self {
             Login: Box::new(LoginPage::new("Login")),
             Main: Box::new(MainPage::new(&_cc.egui_ctx,"Main")),
@@ -42,6 +44,7 @@ impl MyApp  {
             Moniter: Box::new(LoginPage::new("Moniter")),
             MakeAccountPage: Box::new(MakeAccountPage::new("MakeAccount")),
             State: PageState::LOGIN,
+            mouse_interactor:mouse,
         }
     }
 }
@@ -51,8 +54,10 @@ impl MyApp  {
 // 애플리케이션 업데이트 구현
 impl App for MyApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-
-
+        let drag_info=self.mouse_interactor.check(ctx);       
+        if let Some(prdata)=drag_info{
+        println!("드래그앤 드롭 인식 디버그{:?}",prdata);
+        }
         match self.State {
             PageState::LOGIN => {
                 ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(500.0, 350.0)));
@@ -72,8 +77,8 @@ impl App for MyApp {
                 self.State = nstate;
                 //}
                 //else{
-                    println!("Screen rect: {:?}", ctx.screen_rect());
-                    println!("Available rect: {:?}", ctx.available_rect());    
+                   // println!("Screen rect: {:?}", ctx.screen_rect());
+                   // println!("Available rect: {:?}", ctx.available_rect());    
                 //    println!("Screen size is not set to 1500x900");
                 //}
 
