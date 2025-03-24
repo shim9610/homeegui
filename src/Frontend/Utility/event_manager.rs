@@ -5,11 +5,11 @@ use Rusty_egui::egui::Pos2;
 
 #[derive(Clone, Debug)]
 pub struct DragAndDrop{
+    ini:Pos2,
     pos:Pos2,
     state:bool
 }
 //latest_pos, press_origin
-
 pub struct PointScanner{
     pointstats: Vec<PointerState>,
     dragging_flag: bool,
@@ -28,6 +28,7 @@ impl PointScanner{
         dragndrop:false,
         drag:Vec::new(),
         output:DragAndDrop{
+            ini:Pos2::new(0.0,0.0),
             pos:Pos2::new(0.0,0.0),
             state:false
         }
@@ -40,10 +41,11 @@ impl PointScanner{
                 self.dragndrop=false;
             }
             if let Some(indata)= pointer.interact_pos(){
-                let data=self.info(indata);
+                if let Some(inipos)=pointer.press_origin(){
+                let data=self.info(indata,inipos);
                 return Some(data)
-            }   
-            
+                }
+            } 
         }else if pointer.is_decidedly_dragging() || self.dragging_flag{
             if !self.dragging_flag{
                 self.dragging_flag=true;
@@ -59,12 +61,12 @@ impl PointScanner{
                 self.dragging_flag=false;
                 self.flag_count=0
             }
-            
         }
         None
     }
-    fn info(&mut self,inpos:Pos2)->DragAndDrop{
+    fn info(&mut self,inpos:Pos2,ini_in:Pos2)->DragAndDrop{
         self.output=DragAndDrop{
+            ini:ini_in,
             pos:inpos,
             state:self.dragndrop
         };

@@ -1,94 +1,574 @@
-프로젝트 구조 (2025 3월 14일 버전 간혹가다 업데이트 하겟음)
-ssy@ssy-MS-7E01:~/git/homeegui/src$ tree
+(.venv) ssy@ssy-MS-7E01:~/git/homeegui/src$ tree
 .
 ├── Backend
-│   ├── Backend.rs
-│   └── mod.rs
+│   ├── Backend.rs
+│   └── mod.rs
 ├── Frontend
-│   ├── Pages
-│   │   ├── dashboard.rs
-│   │   ├── icon
-│   │   │   ├── Forward.svg
-│   │   │   ├── Play Arrow.svg
-│   │   │   ├── Skip Next.svg
-│   │   │   ├── Skip Previous.svg
-│   │   │   ├── Stop_music.svg
-│   │   │   ├── avi.svg
-│   │   │   ├── back.svg
-│   │   │   ├── bell.svg
-│   │   │   ├── bell2.svg
-│   │   │   ├── cloud with bk.svg
-│   │   │   ├── controlbar.svg
-│   │   │   ├── database.svg
-│   │   │   ├── database3.svg
-│   │   │   ├── databasewithbackground.svg
-│   │   │   ├── doc.svg
-│   │   │   ├── file with background.svg
-│   │   │   ├── file.svg
-│   │   │   ├── file2.svg
-│   │   │   ├── folder.svg
-│   │   │   ├── folder2.svg
-│   │   │   ├── home.svg
-│   │   │   ├── lock.svg
-│   │   │   ├── mail.svg
-│   │   │   ├── many peoples.svg
-│   │   │   ├── musicfile.svg
-│   │   │   ├── peoples.svg
-│   │   │   ├── plus.svg
-│   │   │   ├── setting.svg
-│   │   │   ├── zip.svg
-│   │   │   ├── 돋보기.svg
-│   │   │   ├── 모래시계.svg
-│   │   │   ├── 물음표.svg
-│   │   │   └── 확성기.svg
-│   │   ├── login.rs
-│   │   └── mod.rs
-│   ├── Utility
-│   │   ├── icon
-│   │   │   ├── Forward.svg
-│   │   │   ├── Play Arrow.svg
-│   │   │   ├── Skip Next.svg
-│   │   │   ├── Skip Previous.svg
-│   │   │   ├── Stop_music.svg
-│   │   │   ├── avi.svg
-│   │   │   ├── back.svg
-│   │   │   ├── bell.svg
-│   │   │   ├── bell2.svg
-│   │   │   ├── cloud with bk.svg
-│   │   │   ├── controlbar.svg
-│   │   │   ├── database.svg
-│   │   │   ├── database3.svg
-│   │   │   ├── databasewithbackground.svg
-│   │   │   ├── doc.svg
-│   │   │   ├── docker.svg
-│   │   │   ├── file with background.svg
-│   │   │   ├── file.svg
-│   │   │   ├── file2.svg
-│   │   │   ├── folder.svg
-│   │   │   ├── folder2.svg
-│   │   │   ├── home.svg
-│   │   │   ├── hourglass.svg
-│   │   │   ├── lock.svg
-│   │   │   ├── mail.svg
-│   │   │   ├── many peoples.svg
-│   │   │   ├── musicfile.svg
-│   │   │   ├── peoples.svg
-│   │   │   ├── plus.svg
-│   │   │   ├── question.svg
-│   │   │   ├── reading_glasses.svg
-│   │   │   ├── setting.svg
-│   │   │   ├── speaker.svg
-│   │   │   └── zip.svg
-│   │   ├── icon_loader.rs
-│   │   ├── mod.rs
-│   │   └── ui_styles.rs
-│   ├── app.rs
-│   ├── main.rs
-│   └── mod.rs
+│   ├── Pages
+│   │   ├── dashboard.rs
+│   │   ├── icon
+│   │   │   ├── Forward.svg
+│   │   │   ├── Play Arrow.svg
+│   │   │   ├── Skip Next.svg
+│   │   │   ├── Skip Previous.svg
+│   │   │   ├── Stop_music.svg
+│   │   │   ├── avi.svg
+│   │   │   ├── back.svg
+│   │   │   ├── bell.svg
+│   │   │   ├── bell2.svg
+│   │   │   ├── cloud with bk.svg
+│   │   │   ├── controlbar.svg
+│   │   │   ├── database.svg
+│   │   │   ├── database3.svg
+│   │   │   ├── databasewithbackground.svg
+│   │   │   ├── doc.svg
+│   │   │   ├── file with background.svg
+│   │   │   ├── file.svg
+│   │   │   ├── file2.svg
+│   │   │   ├── folder.svg
+│   │   │   ├── folder2.svg
+│   │   │   ├── home.svg
+│   │   │   ├── lock.svg
+│   │   │   ├── mail.svg
+│   │   │   ├── many peoples.svg
+│   │   │   ├── musicfile.svg
+│   │   │   ├── peoples.svg
+│   │   │   ├── plus.svg
+│   │   │   ├── setting.svg
+│   │   │   ├── zip.svg
+│   │   │   ├── 돋보기.svg
+│   │   │   ├── 모래시계.svg
+│   │   │   ├── 물음표.svg
+│   │   │   └── 확성기.svg
+│   │   ├── login.rs
+│   │   └── mod.rs
+│   ├── Utility
+│   │   ├── area_slicer.rs
+│   │   ├── event_manager.rs
+│   │   ├── icon
+│   │   │   ├── Forward.svg
+│   │   │   ├── Play Arrow.svg
+│   │   │   ├── Skip Next.svg
+│   │   │   ├── Skip Previous.svg
+│   │   │   ├── Stop_music.svg
+│   │   │   ├── avi.svg
+│   │   │   ├── back.svg
+│   │   │   ├── bell.svg
+│   │   │   ├── bell2.svg
+│   │   │   ├── cloud with bk.svg
+│   │   │   ├── controlbar.svg
+│   │   │   ├── database.svg
+│   │   │   ├── database3.svg
+│   │   │   ├── databasewithbackground.svg
+│   │   │   ├── doc.svg
+│   │   │   ├── docker.svg
+│   │   │   ├── file with background.svg
+│   │   │   ├── file.svg
+│   │   │   ├── file2.svg
+│   │   │   ├── folder.svg
+│   │   │   ├── folder2.svg
+│   │   │   ├── home.svg
+│   │   │   ├── hourglass.svg
+│   │   │   ├── lock.svg
+│   │   │   ├── mail.svg
+│   │   │   ├── many peoples.svg
+│   │   │   ├── musicfile.svg
+│   │   │   ├── peoples.svg
+│   │   │   ├── plus.svg
+│   │   │   ├── question.svg
+│   │   │   ├── reading_glasses.svg
+│   │   │   ├── setting.svg
+│   │   │   ├── speaker.svg
+│   │   │   └── zip.svg
+│   │   ├── icon_loader.rs
+│   │   ├── mod.rs
+│   │   └── ui_styles.rs
+│   ├── app.rs
+│   ├── main.rs
+│   └── mod.rs
 └── main.rs
+
+7 directories, 81 files
+(.venv) ssy@ssy-MS-7E01:~/git/homeegui/src$ 
+[event_manager.rs]
+use Rusty_egui::egui::PointerState;
+use Rusty_egui::egui;
+
+use Rusty_egui::egui::Pos2;
+
+#[derive(Clone, Debug)]
+pub struct DragAndDrop{
+    pos:Pos2,
+    state:bool
+}
+//latest_pos, press_origin
+
+pub struct PointScanner{
+    pointstats: Vec<PointerState>,
+    dragging_flag: bool,
+    dragndrop:bool,
+    flag_count: usize,
+    drag:Vec<Pos2>,
+    output:DragAndDrop
+
+}
+impl PointScanner{
+    pub fn new()->Self{
+        Self{
+        pointstats:Vec::new(),
+        flag_count:0,
+        dragging_flag:false,
+        dragndrop:false,
+        drag:Vec::new(),
+        output:DragAndDrop{
+            pos:Pos2::new(0.0,0.0),
+            state:false
+        }
+        }
+    }
+    pub fn check(&mut self, ctx: &egui::Context )-> Option<DragAndDrop>{
+        let pointer = ctx.input(|i| i.pointer.clone());
+        if self.dragndrop{
+            if pointer.any_released(){
+                self.dragndrop=false;
+            }
+            if let Some(indata)= pointer.interact_pos(){
+                let data=self.info(indata);
+                return Some(data)
+            }   
+            
+        }else if pointer.is_decidedly_dragging() || self.dragging_flag{
+            if !self.dragging_flag{
+                self.dragging_flag=true;
+                self.flag_count=0
+            }
+            if pointer.any_down(){
+                self.dragging_flag=false;
+                self.flag_count=0;
+                self.dragndrop=true;
+            }
+            self.flag_count+=1;
+            if self.flag_count==3{
+                self.dragging_flag=false;
+                self.flag_count=0
+            }
+            
+        }
+        None
+    }
+    fn info(&mut self,inpos:Pos2)->DragAndDrop{
+        self.output=DragAndDrop{
+            pos:inpos,
+            state:self.dragndrop
+        };
+        self.output.clone()
+        }
+    }
 
 
 소스코드
+[area_slicer.rs]
+use Rusty_egui::egui::{self, Rect, Ui};
+use std::collections::HashMap;
+use std::vec::Vec;
+
+
+// 슬라이싱 방향 정의
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum SliceDirection {
+    Horizontal, // 수평 방향으로 자름 (위/아래 분할)
+    Vertical,   // 수직 방향으로 자름 (좌/우 분할)
+}
+// 영역 구조체 정의
+#[derive(Debug, Clone)]
+pub struct AreaData {
+    pub id: usize,
+    pub rect: Rect,
+}
+pub struct Area<'a> {
+    pub data: AreaData,
+    pub render_fn: Option<Box<dyn FnMut(&mut Ui)+'a>>,
+}
+
+// 슬라이서 트레잇 정의
+
+
+// 영역 슬라이서 구조체
+pub struct DefaultAreaSlicer <'a>{
+    next_id: usize,
+    areas: HashMap<usize, Area<'a>>,
+}
+
+impl <'a>DefaultAreaSlicer<'a> {
+    // 새 슬라이서 생성
+    pub fn new() -> Self {
+        Self {
+            next_id: 0,
+            areas: HashMap::new(),
+        }
+    }
+    
+    // 초기 루트 영역 생성
+    pub fn initialize(&mut self, root_rect: Rect) -> usize {
+        let id = self.next_id;
+        self.next_id += 1;
+        
+        let area = Area {
+            data: AreaData {
+                id,
+                rect: root_rect,
+            },
+            render_fn: None,
+        };
+        
+        self.areas.insert(id, area);
+        id
+    }
+    
+    // 영역을 특정 방향으로 비율에 따라 분할
+    pub fn slice(&mut self, area_id: usize, direction: SliceDirection, ratios: &[f32]) -> Vec<usize> {
+        if let Some(area) = self.areas.get(&area_id) {
+            let parent_rect = area.data.rect;
+            let mut result = Vec::new();
+            let mut start_pos;
+            
+            // 분할 방향에 따라 처리
+            match direction {
+                SliceDirection::Horizontal => {
+                    // 높이를 비율에 따라 분할
+                    let total_height = parent_rect.height();
+                    start_pos = parent_rect.min.y;
+                    
+                    for ratio in ratios {
+                        let height = total_height * ratio;
+                        let slice_rect = Rect::from_min_size(
+                            egui::pos2(parent_rect.min.x, start_pos),
+                            egui::vec2(parent_rect.width(), height)
+                        );
+                        
+                        let id = self.next_id;
+                        self.next_id += 1;
+                        
+                        let area = Area {
+                            data: AreaData {
+                                id,
+                                rect: slice_rect,
+                            },
+                            render_fn: None,
+                        };
+                        
+                        self.areas.insert(id, area);
+                        result.push(id);
+                        
+                        start_pos += height;
+                    }
+                },
+                SliceDirection::Vertical => {
+                    // 너비를 비율에 따라 분할
+                    let total_width = parent_rect.width();
+                    start_pos = parent_rect.min.x;
+                    
+                    for ratio in ratios {
+                        let width = total_width * ratio;
+                        let slice_rect = Rect::from_min_size(
+                            egui::pos2(start_pos, parent_rect.min.y),
+                            egui::vec2(width, parent_rect.height())
+                        );
+                        
+                        let id = self.next_id;
+                        self.next_id += 1;
+                        
+                        let area = Area {
+                            data: AreaData {
+                                id,
+                                rect: slice_rect,
+                            },
+                            render_fn: None,
+                        };
+                        
+                        self.areas.insert(id, area);
+                        result.push(id);
+                        
+                        start_pos += width;
+                    }
+                },
+            }
+            
+            return result;
+        }
+        
+        Vec::new() // 해당 ID의 영역이 없으면 빈 벡터 반환
+    }
+    
+    // 영역을 균등하게 분할
+    pub fn split_evenly(&mut self, area_id: usize, direction: SliceDirection, count: usize) -> Vec<usize> {
+        if count == 0 {
+            return Vec::new();
+        }
+        
+        let ratio = 1.0 / (count as f32);
+        let ratios = vec![ratio; count];
+        
+        self.slice(area_id, direction, &ratios)
+    }
+    
+    // 그리드 형태로 분할
+    pub fn grid(&mut self, area_id: usize, rows: usize, cols: usize) -> Vec<Vec<usize>> {
+        if let Some(area) = self.areas.get(&area_id) {
+            let parent_rect = area.data.rect;
+            let mut result = Vec::with_capacity(rows);
+            
+            // 먼저 행으로 분할
+            let row_ratio = 1.0 / (rows as f32);
+            let row_ratios = vec![row_ratio; rows];
+            let row_ids = self.slice(area_id, SliceDirection::Horizontal, &row_ratios);
+            
+            // 각 행을 열로 분할
+            for row_id in row_ids {
+                let col_ratio = 1.0 / (cols as f32);
+                let col_ratios = vec![col_ratio; cols];
+                let col_ids = self.slice(row_id, SliceDirection::Vertical, &col_ratios);
+                result.push(col_ids);
+            }
+            
+            return result;
+        }
+        
+        Vec::new() // 해당 ID의 영역이 없으면 빈 벡터 반환
+    }
+    
+    // 렌더링 함수 설정
+    pub fn set_render_fn<F>(&mut self, area_id: usize, render_fn: F) -> bool
+    where
+        F: FnMut(&mut Ui) + 'a,
+    {
+        if let Some(area) = self.areas.get_mut(&area_id) {
+            area.render_fn = Some(Box::new(render_fn));
+            return true;
+        }
+        false
+    }
+    
+    // 모든 영역 렌더링
+    pub fn render_all(&mut self, ui: &mut Ui) {
+        // ID 목록을 먼저 수집 (borrow checker 이슈 방지)
+        let ids: Vec<usize> = self.areas.keys().cloned().collect();
+        
+        for id in ids {
+            if let Some(area) = self.areas.get_mut(&id) {
+                if let Some(render_fn) = &mut area.render_fn {
+                    let area_rect = area.data.rect;
+                    ui.allocate_ui_at_rect(area_rect, |ui| {
+                        render_fn(ui);
+                    });
+                }
+            }
+        }
+    }
+    
+    // 크기 업데이트 (윈도우 크기 변경 시 호출)
+    pub fn update_size(&mut self, new_root_rect: Rect) {
+        // 여기서는 간단하게 루트만 업데이트
+        // 실제로는 비율을 유지하면서 모든 영역을 재계산해야 함
+        if let Some(root_area) = self.areas.get_mut(&0) {
+            root_area.data.rect = new_root_rect;
+        }
+    }
+    
+    // 영역 ID로 Rect 가져오기
+    pub fn get_rect(&self, area_id: usize) -> Option<Rect> {
+        self.areas.get(&area_id).map(|area| area.data.rect)
+    }
+}
+
+
+
+pub trait AreaSlicer<'a> {
+    // 슬라이싱 작업 수행
+    fn slice(&mut self, area_id: usize, direction: SliceDirection, ratios: &[f32]) -> Vec<usize>;
+    
+    // 균등 분할
+    fn split_evenly(&mut self, area_id: usize, direction: SliceDirection, count: usize) -> Vec<usize>;
+    
+    // 그리드 형태로 분할
+    fn grid(&mut self, area_id: usize, rows: usize, cols: usize) -> Vec<Vec<usize>>;
+    
+    // 렌더링 함수 설정
+    fn set_render_fn<F>(&mut self, area_id: usize, render_fn: F) -> bool
+    where
+        F: FnMut(&mut Ui) + 'a;
+    
+    // 모든 영역 렌더링
+    fn render_all(&mut self, ui: &mut Ui);
+    
+    // 영역 존재 여부 확인
+    fn has_area(&self, area_id: usize) -> bool;
+    
+    // 영역 정보 가져오기
+    fn get_area_data(&self, area_id: usize) -> Option<&AreaData>;
+}
+impl<'a> AreaSlicer<'a> for DefaultAreaSlicer<'a>{
+    fn slice(&mut self, area_id: usize, direction: SliceDirection, ratios: &[f32]) -> Vec<usize> {
+        DefaultAreaSlicer::slice(self, area_id, direction, ratios)
+    }
+    fn split_evenly(&mut self, area_id: usize, direction: SliceDirection, count: usize) -> Vec<usize> {
+        DefaultAreaSlicer::split_evenly(self, area_id, direction, count)
+    }
+    fn grid(&mut self, area_id: usize, rows: usize, cols: usize) -> Vec<Vec<usize>> {
+        DefaultAreaSlicer::grid(self, area_id, rows, cols)
+    }
+    fn set_render_fn<F>(&mut self, area_id: usize, render_fn: F) -> bool
+    where
+     F: FnMut(&mut Ui)+'a ,
+    {
+        DefaultAreaSlicer::set_render_fn(self, area_id, render_fn)
+    }
+    fn render_all(&mut self, ui: &mut Ui) {
+        DefaultAreaSlicer::render_all(self, ui)
+    }
+    fn has_area(&self, area_id: usize) -> bool {
+        self.areas.contains_key(&area_id)
+    }
+    fn get_area_data(&self, area_id: usize) -> Option<&AreaData> {
+        self.areas.get(&area_id).map(|area| &area.data)
+    }
+
+}
+#[derive(Clone)]
+struct XYindex{
+    xindex:usize,
+    yindex:usize,
+}
+struct Indexer{
+    len:usize,
+    xyindex:XYindex,
+    width:usize,
+    height:usize,
+}
+impl Indexer{
+    fn new(len:usize,width:usize,height:usize)->Self{
+        Self{
+            len,
+            xyindex:XYindex{xindex:0,yindex:0,},
+            width,
+            height,
+        }
+    }
+    fn set_index(&mut self,index:usize)->XYindex{
+        self.len=index;
+        let xindex = index % self.width;
+        let yindex = index / self.width;
+        self.xyindex = XYindex{xindex,yindex}.clone();
+        XYindex{xindex,yindex}
+    }
+}
+// 파일 전용 슬라이서 구조체
+pub struct FileSlicer <'a>{
+    defaultareaslicer: DefaultAreaSlicer<'a>,
+    margin: f32,
+    file_height: f32,
+    file_width: f32,
+    distance: f32,
+    width: f32,
+    height: f32,
+    rows: usize,
+    cols: usize,
+    maxnum:usize,
+    addnum:usize,
+    index:Indexer,
+    root_id:usize,
+    grid: Vec<Vec<usize>>,
+    
+}
+impl <'a> FileSlicer<'a>{
+    pub fn new(margin: f32,file_width:f32 ,file_height: f32,distance:f32,root_rect: Rect  ) -> Self {
+        let mut data=DefaultAreaSlicer::new();
+        let root_id=data.initialize(root_rect);
+        let width=root_rect.width();
+        let height=root_rect.height();
+        let rows:usize =0;
+        let cols:usize =0;
+        let maxnum:usize=0;
+        let addnum:usize=0;
+        let index=Indexer::new(0,width as usize,height as usize);
+        let grid: Vec<Vec<usize>>=Vec::new();
+        Self {
+            defaultareaslicer: data,
+            margin,
+            distance,
+            file_width,
+            file_height,
+            width,
+            height,
+            rows,
+            cols,
+            maxnum,
+            addnum,
+            index,
+            root_id,
+            grid,
+        }
+    }
+    pub fn set_number_of_grid(&mut self){
+        self.cols =((self.width-self.distance-self.margin*2.0)/(self.file_width+self.distance)).round() as usize;
+        self.rows =((self.height-self.distance-self.margin*2.0)/(self.file_height+self.distance)).round()as usize;
+        self.maxnum=self.cols*self.rows;
+        let rario_columns=self.margin/self.width ;
+        let input_ratio:[f32;3]=[rario_columns,(1.0-rario_columns*1.2),rario_columns*0.2];
+        let columns = self.defaultareaslicer.slice(self.root_id,SliceDirection::Vertical,&input_ratio);
+        let rario_row=self.margin/self.height ;
+        let input_ratio_r:[f32;3]=[rario_row,(1.0-rario_row*1.2),rario_row*0.2];
+        let row = self.defaultareaslicer.slice(columns[1],SliceDirection::Vertical,&input_ratio_r);
+        self.root_id=row[1];
+    }
+    pub fn get_grid(&mut self){
+        self.grid=self.defaultareaslicer.grid(self.root_id,self.rows,self.cols);
+    }
+    pub fn add_file<F>(&mut self, ui: &mut egui::Ui, mut fun: F)
+    where
+        F: FnMut(&mut Ui) + 'a,
+    {
+        // 먼저 그리드 크기 계산
+
+
+
+        self.get_grid();
+        // 그리드 초기화
+
+            
+
+        
+        // 여기서 그리드 유효성 검사
+        if self.grid.is_empty() || self.addnum >= self.maxnum {
+            println!("Grid is empty or maximum items reached.");
+            return;
+        }
+        self.index.height=self.grid.len();
+        self.index.width=self.grid[0].len();
+        let id = self.index.set_index(self.addnum);
+        
+        // 범위 검사 추가
+        if id.yindex >= self.grid.len() || id.xindex >= self.grid[0].len() {
+            println!("Index out of bounds: yindex={}, xindex={}, grid={}x{}", 
+                     id.yindex, id.xindex, self.grid.len(), 
+                     if self.grid.is_empty() { 0 } else { self.grid[0].len() });
+            return;
+        }
+        
+        let values = self.grid[id.yindex][id.xindex];
+        self.defaultareaslicer.set_render_fn(values, move |ui| {
+            fun(ui);
+        });
+        
+        self.defaultareaslicer.render_all(ui);
+        self.addnum += 1;
+    }
+
+
+
+}
+
+
 [icon_loader.rs]
 use Rusty_egui::egui;
 use usvg;
@@ -905,6 +1385,7 @@ use Rusty_egui::egui;
 use Rusty_egui::eframe::{App, CreationContext};
 use crate::Frontend::Pages::login::{LoginPage,MakeAccountPage};
 use crate::Frontend::Pages::dashboard::MainPage;
+use crate::Frontend::Utility::event_manager::PointScanner;
 pub enum PageState {
     LOGIN,
     MAIN,
@@ -912,7 +1393,6 @@ pub enum PageState {
     MONITER,
     MAKEACCOUNT,
 }
-
 pub trait Page{
     fn run(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame)->PageState;
     // 추가로 유용한 메서드들:
@@ -923,12 +1403,13 @@ pub trait Page{
 
 
 pub struct MyApp {
-    Login :Box<dyn Page>,
-    Main :Box<dyn Page>,
-    File :Box<dyn Page>,
-    Moniter :Box<dyn Page>,
-    MakeAccountPage : Box<dyn Page>,
-    State : PageState,
+    login :Box<dyn Page>,
+    main :Box<dyn Page>,
+    file :Box<dyn Page>,
+    moniter :Box<dyn Page>,
+    make_account_page : Box<dyn Page>,
+    state : PageState,
+    mouse_interactor : PointScanner,
 
     
 
@@ -937,13 +1418,15 @@ pub struct MyApp {
 impl MyApp  {
     pub fn new(_cc: &CreationContext) -> Self {
         Rusty_egui::replace_fonts(&_cc.egui_ctx);
+        let mouse = PointScanner::new();
         Self {
-            Login: Box::new(LoginPage::new("Login")),
-            Main: Box::new(MainPage::new(&_cc.egui_ctx,"Main")),
-            File: Box::new(LoginPage::new("File")),
-            Moniter: Box::new(LoginPage::new("Moniter")),
-            MakeAccountPage: Box::new(MakeAccountPage::new("MakeAccount")),
-            State: PageState::LOGIN,
+            login: Box::new(LoginPage::new("Login")),
+            main: Box::new(MainPage::new(&_cc.egui_ctx,"Main")),
+            file: Box::new(LoginPage::new("File")),
+            moniter: Box::new(LoginPage::new("Moniter")),
+            make_account_page: Box::new(MakeAccountPage::new("MakeAccount")),
+            state: PageState::LOGIN,
+            mouse_interactor:mouse,
         }
     }
 }
@@ -953,18 +1436,34 @@ impl MyApp  {
 // 애플리케이션 업데이트 구현
 impl App for MyApp {
     fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
-
-
-        match self.State {
+        let drag_info=self.mouse_interactor.check(ctx);       
+        if let Some(prdata)=drag_info{
+        println!("드래그앤 드롭 인식 디버그{:?}",prdata);
+        }
+        match self.state {
             PageState::LOGIN => {
                 ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(500.0, 350.0)));
-                let nstate=self.Login.run( ctx, frame);
-                self.State = nstate;
+                let nstate=self.login.run( ctx, frame);
+                self.state = nstate;
             }
             PageState::MAIN => {
-                ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(1500.0, 900.0)));
-                let nstate: PageState=self.Main.run( ctx, frame);
-                self.State = nstate;
+                let setx=1500.0;
+                let sety=900.0;
+                ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(setx, sety)));
+                let screen_rect = ctx.screen_rect();
+                //let screen_width = screen_rect.width();
+                //let screen_height = screen_rect.height();
+                
+                //if screen_width==setx && screen_height==sety{
+                let nstate: PageState=self.main.run( ctx, frame);
+                self.state = nstate;
+                //}
+                //else{
+                   // println!("Screen rect: {:?}", ctx.screen_rect());
+                   // println!("Available rect: {:?}", ctx.available_rect());    
+                //    println!("Screen size is not set to 1500x900");
+                //}
+
             }
             PageState::FILE => {
                 //self.File.run();
@@ -974,8 +1473,8 @@ impl App for MyApp {
             }
             PageState::MAKEACCOUNT => {
                 ctx.send_viewport_cmd(egui::ViewportCommand::InnerSize(egui::vec2(850.0, 450.0)));
-                let nstate= self.MakeAccountPage.run( ctx, frame);
-                self.State = nstate;
+                let nstate= self.make_account_page.run( ctx, frame);
+                self.state = nstate;
             }
         }
 
@@ -1004,11 +1503,11 @@ pub fn run_ui(){
         Box::new(|cc| Ok(Box::new(MyApp::new(cc)))),
     );
 }
-
 [dashboard.rs]
 use crate::Frontend::app::{Page, PageState};
 use Rusty_egui::egui::UiBuilder;
 use crate::Frontend::Utility::ui_styles::UiStyle;
+use crate::Frontend::Utility::area_slicer::{DefaultAreaSlicer,FileSlicer};
 use Rusty_egui::egui;
 use Rusty_egui::eframe;
 use crate::Frontend::Utility::ui_styles::{ContextStyle, WidgetStyle};
@@ -1026,7 +1525,6 @@ const SETTINGS_ICON: &[u8] = include_bytes!("icon/setting.svg");
 const PLAY_ICON: &[u8] = include_bytes!("icon/Play Arrow.svg");
 const BACK_ICON: &[u8] = include_bytes!("icon/back.svg");
 const FORWARD_ICON: &[u8] = include_bytes!("icon/Forward.svg");
-use std::collections::HashMap;
 
 
 struct FILEINFO{
@@ -1052,7 +1550,7 @@ impl Filesystem{
         }
     }
     fn add_file(&mut self,mut file: FileData){
-        self.current_index=self.current_index+1;
+        self.current_index += 1;
         file.index=self.current_index;
         self.file_list.push(file);
     }
@@ -1112,7 +1610,7 @@ fn load_svg_as_color_image(svg_bytes: &[u8]) -> egui::ColorImage {
     let rtree = Tree::from_data(svg_bytes, &options).expect("SVG 파싱 실패");
 
     let pixmap_size = rtree.size().to_int_size();
-    let (w, h) = (pixmap_size.width() as u32, pixmap_size.height() as u32);
+    let (w, h) = (pixmap_size.width(), pixmap_size.height());
 
     let mut pixmap = tiny_skia::Pixmap::new(w, h).unwrap();
 
@@ -1145,13 +1643,11 @@ impl TapPage for ExplorerPage{
     }
 
     fn render(&mut self, ui: &mut egui::Ui,ctx: &egui::Context) {
-        if self.draw{
-            if IconButton::new(ctx, Icon::FOLDER2, ButtonStyle::Explorer)
+        if self.draw && IconButton::new(ctx, Icon::FOLDER2, ButtonStyle::Explorer)
             .size(egui::vec2(40.0, 40.0))
-            .tooltip("file1")
-            .show(ui).clicked(){
-                println!("File1 Clicked");
-            }
+            .tooltip("그런데 파일 이름이 길어지면 어디서 줄이 바뀌지?>.,.,.ㄹ이아루니아룬이라누이라ㅜ")
+            .show(ui).clicked() {
+
         }
     }
     fn clone_page(&self) -> Box<dyn TapPage> {
@@ -1160,6 +1656,10 @@ impl TapPage for ExplorerPage{
     fn activate(&mut self) {
         self.draw=true;
     }
+    fn deactivate(&mut self) {
+        self.draw=false;
+    }
+
     
 }
 impl ExplorerPage{
@@ -1207,6 +1707,9 @@ impl TapPage for Basepage{
     fn activate(&mut self) {
         self.draw=true;
     }
+    fn deactivate(&mut self) {
+        self.draw=false;
+    }
 }
 
 struct AreaStructure {
@@ -1242,11 +1745,18 @@ impl AreaStructure {
     pub fn _initialize(&mut self, window_rect_no_margin: Rect) {
 
         let margin:f32 = 5.0;
+        let width =window_rect_no_margin.width();
+        let height = window_rect_no_margin.height();
+
         let  window_rect = Rect::from_min_size(
             egui::pos2(window_rect_no_margin.min.x + margin, window_rect_no_margin.min.y + margin),
-            egui::vec2(window_rect_no_margin.width() - margin , window_rect_no_margin.height() - margin )
+            egui::vec2(width - margin , height - margin )
         );
         // 비율 상수들
+        let width_debug =window_rect.width();
+        let height_debug = window_rect.height();
+        //println!("Window rect width: {:?}", width_debug);
+        //println!("Window rect height: {:?}", height_debug);
         let top_layer_ratio = 0.05;      // 상단 영역 높이 비율
         let bottom_layer_ratio = 0.1;   // 하단 영역 높이 비율
         let left_side_ratio = 0.2;      // 좌측 영역 너비 비율
@@ -1320,7 +1830,7 @@ impl AreaStructure {
 
 }
 
-pub struct MainPage {
+pub struct MainPage <'a>{
     _name: String,
     _id_field: String,  // 이렇게 필드 추가
     area: AreaStructure,
@@ -1333,8 +1843,10 @@ pub struct MainPage {
     current_left_tab: LeftTabState,
     toggle_set:ToggleController,
     explorer: Option<Rc<RefCell<Box<dyn TapPage>>>>,
+    slicer : Option<DefaultAreaSlicer<'a>>,
+
 }
-impl MainPage {
+impl MainPage <'_>{
     pub fn new(ctx: &egui::Context, name: &str) -> Self 
 
     {
@@ -1346,6 +1858,8 @@ impl MainPage {
         let forward_icon = load_svg_icon(ctx, FORWARD_ICON);
         let current_left_tab = LeftTabState::None;
         let mut toggle=ToggleController::new();
+        let slicer_n=None;
+
         toggle.add::<fn(),Basepage>(
             IconButton::new(ctx, Icon::CLOUD_WITH_BK, ButtonStyle::Menu)
             .size(egui::vec2(24.0, 24.0))
@@ -1355,6 +1869,7 @@ impl MainPage {
             .tooltip("Data Cloud"),
             None as Option<fn()>,
             Some(Rc::new(RefCell::new(Box::new(Basepage::new("Data Cloud")) as Box<dyn TapPage>)))
+
         );
         toggle.add::<fn(),Basepage>(IconButton::new(ctx, Icon::DOCKER, ButtonStyle::Menu)
         .size(egui::vec2(24.0, 24.0))
@@ -1382,7 +1897,6 @@ impl MainPage {
         .with_click_style(&UiStyle::bright_blue())
         .tooltip("Explorer"),None as Option<fn()>,subpage.clone());
 
-        
         Self {
             _name: name.to_string(),
             _id_field: String::new(),
@@ -1394,7 +1908,9 @@ impl MainPage {
             forward_icon,
             current_left_tab,
             toggle_set:toggle,
-            explorer: subpage.clone(),          
+            explorer: subpage.clone(), 
+            slicer:slicer_n, 
+
         }
     }
     fn render_top_layer(&mut self, ui: &mut egui::Ui,returnV:&mut PageState) {
@@ -1421,8 +1937,7 @@ impl MainPage {
             
             // 오른쪽 영역: 아이콘들
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-            
-
+                
                 let lock_button = egui::ImageButton::new(
                     egui::load::SizedTexture::new(self.lock_icon.id(), egui::vec2(20.0, 20.0))
                 ).frame(true);  // 프레임(배경) 추가
@@ -1452,12 +1967,11 @@ impl MainPage {
             ui.vertical_centered(|ui| {
             
             self.toggle_set.show(ui,ctx);
-            self.toggle_set.update_page(ui,ctx);
+            //self.toggle_set.update_page(ui,ctx);
             });
         
         ui.vertical_centered(|ui| {
             
-
         });
         ui.separator();
             
@@ -1482,7 +1996,6 @@ impl MainPage {
         });
     }
     
-    
     fn render_left_bottom(&mut self, ui: &mut egui::Ui) {
         // 좌측 하단 UI 코드
         ui.label("좌측 하단");
@@ -1499,24 +2012,32 @@ impl MainPage {
     }
     
     fn render_right_bottom(&mut self, ui: &mut egui::Ui,ctx : &egui::Context) {
-
-        if let Some(rc_page) = & self.explorer {  // Option 언래핑
-            // RefCell에서 내용물 빌리기
-            let mut page_ref = rc_page.borrow_mut();
-            // 이제 page_ref로 render 메서드 호출
-            page_ref.render(ui, ctx);
-        }
+            //let ctx_clone = ctx.clone();
+            //println!("{:?}",ctx_clone.screen_rect());
+            let right_bottom_rect = ui.max_rect(); // 현재 우하단 UI 영역
+            let mut file = FileSlicer::new(40.0,80.0,50.0,20.0,right_bottom_rect);
+            file.set_number_of_grid();
+            let ctx_clone = ctx.clone();
+            for _i in 0..40 {
+                let ctx_inner_clone = ctx_clone.clone();
+                if let Some(rc_page) = &self.explorer {
+                    let rc_page_clone = rc_page.clone();  // Rc 복제
+                    file.add_file(ui, move |ui_param| {
+                        let mut page_ref = rc_page_clone.borrow_mut();  // 클로저 내부에서 borrow_mut
+                        page_ref.render(ui_param, &ctx_inner_clone);
+                    });
+                }
+            }
     }
 }
 
-
-
-
-
-
-impl Page  for MainPage {
-
+impl Page  for MainPage<'_> {
     fn run(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame)->PageState {
+
+        self.area=AreaStructure::new();
+        let full_rect =ctx.screen_rect();
+        self.area._initialize(full_rect);
+        //println!("Screen rect inside: {:?}", full_rect);
         let _ = &ctx.apply_style(&UiStyle::deep_navy(2));
         let mut returnV=PageState::MAIN;
         egui::CentralPanel::default()
@@ -1525,8 +2046,8 @@ impl Page  for MainPage {
             inner_margin: Rusty_egui::egui::Margin::same(25.0),
         ..Default::default()
         }).apply_style(&UiStyle::dark_blue()).show(ctx, |ui| {
-            let full_rect = ui.max_rect();
-            self.area._initialize(full_rect);
+            //let full_rect = ui.max_rect();
+            //self.area._initialize(full_rect);
 
             ui.allocate_new_ui(self.area.top_layer.clone(), |ui| {
                 self.render_top_layer(ui,&mut returnV);
@@ -1546,8 +2067,6 @@ impl Page  for MainPage {
             ui.allocate_new_ui(self.area.bottom_layer.clone(), |ui| {
                 self.render_bottom_layer(ui);
             });
-       
-       
 
     }
     );
@@ -1567,7 +2086,6 @@ impl Page  for MainPage {
     
 }
 //lock.svg, setting.svg Play Arrow Skip Next Stop_music Skip Previous Forward back
-
 [login.rs]
 use crate::Frontend::app::{Page, PageState};
 use Rusty_egui::egui::UiBuilder;

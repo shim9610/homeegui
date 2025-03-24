@@ -5,6 +5,7 @@ use egui::ColorImage;
 use Rusty_egui::image::{ImageBuffer, Rgba};
 use tiny_skia;
 use crate::Frontend::Utility::ui_styles::UiStyle;
+use crate::Frontend::Utility::area_slicer::FileVec;
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -606,10 +607,11 @@ impl IconButton {
 pub trait TapPage {
     fn new(title: &str) -> Self where Self: Sized;
     fn add(&mut self, item: &str);
-    fn render(&mut self, ui: &mut egui::Ui,ctx: &egui::Context);
+    fn render(&mut self, ui: &mut egui::Ui,ctx: &mut egui::Context)->Option<FileVec>;
     fn clone_page(&self) -> Box<dyn TapPage>; // Clone 대신 사용
     fn activate(&mut self);
     fn deactivate(&mut self);
+    fn get_draw(&self)->bool;
 }
 
 pub struct ToggleController {
@@ -744,3 +746,18 @@ impl ToggleController {
     }
 }
 
+
+#[derive(Clone)]
+pub struct ExplorerIcon{
+    pub file : IconButton
+}
+impl ExplorerIcon{
+    pub fn new(ctx:&mut Rusty_egui::egui::Context,text:String)->ExplorerIcon{
+        let data= IconButton::new(ctx, Icon::FOLDER2, ButtonStyle::Explorer)
+                .size(egui::vec2(40.0, 40.0))
+                .tooltip(text);
+        Self{
+        file:data
+        }
+    }
+}

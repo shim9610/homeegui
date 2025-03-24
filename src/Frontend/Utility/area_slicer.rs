@@ -1,7 +1,9 @@
 use Rusty_egui::egui::{self, Rect, Ui};
 use std::collections::HashMap;
 use std::vec::Vec;
-
+use std::iter::IntoIterator;
+use Rusty_egui::egui::Context;
+use crate::Frontend::Utility::icon_loader::{ExplorerIcon,IconButton};
 
 // 슬라이싱 방향 정의
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -211,8 +213,6 @@ impl <'a>DefaultAreaSlicer<'a> {
     }
 }
 
-
-
 pub trait AreaSlicer<'a> {
     // 슬라이싱 작업 수행
     fn slice(&mut self, area_id: usize, direction: SliceDirection, ratios: &[f32]) -> Vec<usize>;
@@ -308,8 +308,33 @@ pub struct FileSlicer <'a>{
     index:Indexer,
     root_id:usize,
     grid: Vec<Vec<usize>>,
+    name : String,
     
 }
+
+#[derive(Clone)]
+pub struct FileVec{
+    files:Vec<ExplorerIcon>
+}
+impl FileVec{
+        pub fn new (ctx:&mut Rusty_egui::egui::Context,text:String)->Self
+    {
+        let mut ndata=Vec::new();
+        let in_data= ExplorerIcon::new(ctx,text);
+        ndata.push(in_data);
+
+        Self{
+            files:ndata,
+
+        }
+    }
+    pub fn add (&mut self,ctx:&mut Rusty_egui::egui::Context,text:String)
+    {
+        let in_data= ExplorerIcon::new(ctx,text);
+        self.files.push(in_data);
+    }
+}
+
 impl <'a> FileSlicer<'a>{
     pub fn new(margin: f32,file_width:f32 ,file_height: f32,distance:f32,root_rect: Rect  ) -> Self {
         let mut data=DefaultAreaSlicer::new();
@@ -322,6 +347,7 @@ impl <'a> FileSlicer<'a>{
         let addnum:usize=0;
         let index=Indexer::new(0,width as usize,height as usize);
         let grid: Vec<Vec<usize>>=Vec::new();
+        let name="임시 이름 입니다.".to_string();
         Self {
             defaultareaslicer: data,
             margin,
@@ -337,6 +363,7 @@ impl <'a> FileSlicer<'a>{
             index,
             root_id,
             grid,
+            name,
         }
     }
     pub fn set_number_of_grid(&mut self){
@@ -354,21 +381,10 @@ impl <'a> FileSlicer<'a>{
     pub fn get_grid(&mut self){
         self.grid=self.defaultareaslicer.grid(self.root_id,self.rows,self.cols);
     }
-    pub fn add_file<F>(&mut self, ui: &mut egui::Ui, mut fun: F)
-    where
-        F: FnMut(&mut Ui) + 'a,
+    pub fn add_file_vec(&mut self,ui: &mut egui::Ui,vecdata:FileVec)
     {
-        // 먼저 그리드 크기 계산
-
-
-
+        let copy_vecdata=vecdata.clone();
         self.get_grid();
-        // 그리드 초기화
-
-            
-
-        
-        // 여기서 그리드 유효성 검사
         if self.grid.is_empty() || self.addnum >= self.maxnum {
             println!("Grid is empty or maximum items reached.");
             return;
@@ -376,24 +392,32 @@ impl <'a> FileSlicer<'a>{
         self.index.height=self.grid.len();
         self.index.width=self.grid[0].len();
         let id = self.index.set_index(self.addnum);
-        
-        // 범위 검사 추가
-        if id.yindex >= self.grid.len() || id.xindex >= self.grid[0].len() {
-            println!("Index out of bounds: yindex={}, xindex={}, grid={}x{}", 
-                     id.yindex, id.xindex, self.grid.len(), 
-                     if self.grid.is_empty() { 0 } else { self.grid[0].len() });
+            if id.yindex >= self.grid.len() || id.xindex >= self.grid[0].len() {
+                println!("Index out of bounds: yindex={}, xindex={}, grid={}x{}", 
+                id.yindex, id.xindex, self.grid.len(), 
+                if self.grid.is_empty() { 0 } else { self.grid[0].len() });
             return;
         }
-        
-        let values = self.grid[id.yindex][id.xindex];
-        self.defaultareaslicer.set_render_fn(values, move |ui| {
-            fun(ui);
-        });
-        
-        self.defaultareaslicer.render_all(ui);
-        self.addnum += 1;
+
+        for i in 0.. vecdata.files.len(){
+            let icon_file=copy_vecdata.files[i].file.clone();
+            self.index.height=self.grid.len();
+            self.index.width=self.grid[0].len();
+            let id = self.index.set_index(self.addnum);
+            // 범위 검사 추가
+            if id.yindex >= self.grid.len() || id.xindex >= self.grid[0].len() {
+                println!("Index out of bounds: yindex={}, xindex={}, grid={}x{}", 
+                         id.yindex, id.xindex, self.grid.len(), 
+                         if self.grid.is_empty() { 0 } else { self.grid[0].len() });
+                return;
+            }
+            let values = self.grid[id.yindex][id.xindex];
+            self.defaultareaslicer.set_render_fn(values, move |ui| {
+                 icon_file.clone().show(ui);
+            });
+            self.addnum += 1;
+        }
+    self.defaultareaslicer.render_all(ui);
     }
-
-
 
 }

@@ -1,7 +1,7 @@
 use crate::Frontend::app::{Page, PageState};
 use Rusty_egui::egui::UiBuilder;
 use crate::Frontend::Utility::ui_styles::UiStyle;
-use crate::Frontend::Utility::area_slicer::{DefaultAreaSlicer,FileSlicer};
+use crate::Frontend::Utility::area_slicer::{DefaultAreaSlicer,FileSlicer,FileVec};
 use Rusty_egui::egui;
 use Rusty_egui::eframe;
 use crate::Frontend::Utility::ui_styles::{ContextStyle, WidgetStyle};
@@ -12,6 +12,7 @@ use egui::ColorImage;
 use crate::Frontend::Utility::icon_loader::{IconButton,Icon,ButtonStyle,ToggleController,TapPage};
 use Rusty_egui::image::{ImageBuffer, Rgba};
 use tiny_skia;
+use core::borrow;
 use std::rc::Rc;
 use std::cell::RefCell;
 const LOCK_ICON: &[u8] = include_bytes!("icon/lock.svg");
@@ -136,13 +137,18 @@ impl TapPage for ExplorerPage{
 
     }
 
-    fn render(&mut self, ui: &mut egui::Ui,ctx: &egui::Context) {
-        if self.draw && IconButton::new(ctx, Icon::FOLDER2, ButtonStyle::Explorer)
-            .size(egui::vec2(40.0, 40.0))
-            .tooltip("그런데 파일 이름이 길어지면 어디서 줄이 바뀌지?>.,.,.ㄹ이아루니아룬이라누이라ㅜ")
-            .show(ui).clicked() {
-
+    fn render(&mut self, ui: &mut egui::Ui,ctx: &mut egui::Context)-> Option<FileVec>{
+        if self.draw{
+            let mut ctx_clone = ctx.clone();
+            let mut ctx_inner_clone = ctx_clone.clone();
+            let mut invec:FileVec=FileVec::new(&mut ctx_inner_clone,"처음".to_string());
+            for _i in 0..40 {
+                let mut ctx_inner_clone = ctx_clone.clone();
+                invec.add(&mut ctx_inner_clone,"테스트 셋".to_string());
+            }
+            return Some(invec);
         }
+        return None;
     }
     fn clone_page(&self) -> Box<dyn TapPage> {
         Box::new(Self::clone(self))
@@ -153,7 +159,9 @@ impl TapPage for ExplorerPage{
     fn deactivate(&mut self) {
         self.draw=false;
     }
-
+    fn get_draw(&self)->bool{
+        self.draw
+    }
     
 }
 impl ExplorerPage{
@@ -169,6 +177,7 @@ impl ExplorerPage{
             self.draw=false;
         }
     }
+
 }
 #[derive(Clone)]
 struct Basepage{
@@ -188,11 +197,15 @@ impl TapPage for Basepage{
 
     }
 
-    fn render(&mut self, ui: &mut egui::Ui,ctx: &egui::Context) {
+    fn render(&mut self, ui: &mut egui::Ui,ctx: &mut egui::Context)-> Option<FileVec>{
         if self.draw{
             ui.label("Base Page");
+            
             self.draw=false;
+            return Some(FileVec::new(ctx ,"none".to_string()));
+
         }
+        return None;
         
     }
     fn clone_page(&self) -> Box<dyn TapPage> {
@@ -203,6 +216,9 @@ impl TapPage for Basepage{
     }
     fn deactivate(&mut self) {
         self.draw=false;
+    }
+    fn get_draw(&self)->bool{
+        self.draw
     }
 }
 
@@ -508,21 +524,27 @@ impl MainPage <'_>{
     fn render_right_bottom(&mut self, ui: &mut egui::Ui,ctx : &egui::Context) {
             //let ctx_clone = ctx.clone();
             //println!("{:?}",ctx_clone.screen_rect());
+            let mut draw=false;
+            let mut file=FileSlicer::new(40.0,80.0,50.0,20.0,
+                Rect::from_min_size(egui::Pos2::new(0.0, 0.0), egui::vec2(0.0, 0.0)));
+
+
+            {
             let right_bottom_rect = ui.max_rect(); // 현재 우하단 UI 영역
-            let mut file = FileSlicer::new(40.0,80.0,50.0,20.0,right_bottom_rect);
-            file.set_number_of_grid();
-            let ctx_clone = ctx.clone();
-            for _i in 0..40 {
-                let ctx_inner_clone = ctx_clone.clone();
-                if let Some(rc_page) = &self.explorer {
-                    let rc_page_clone = rc_page.clone();  // Rc 복제
-                    file.add_file(ui, move |ui_param| {
-                        let mut page_ref = rc_page_clone.borrow_mut();  // 클로저 내부에서 borrow_mut
-                        page_ref.render(ui_param, &ctx_inner_clone);
-                    });
-                }
+            file= FileSlicer::new(40.0,80.0,50.0,20.0,right_bottom_rect);
             }
-    }
+
+            let mut ctx_clone=ctx.clone();
+            file.set_number_of_grid();
+            if let Some(tap) = &self.explorer.clone(){
+                let mut borrow  =tap.as_ref().borrow_mut();
+            let invec = (*borrow).render(ui,&mut ctx_clone);
+            if let Some(out)=invec{
+            file.add_file_vec(ui,out.clone());
+             }
+            }
+        
+        }
 }
 
 impl Page  for MainPage<'_> {
