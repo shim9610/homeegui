@@ -1,4 +1,4 @@
-use Rusty_egui::egui;
+use Rusty_egui::egui::{self, Response};
 use usvg;
 use resvg;
 use egui::ColorImage;
@@ -284,6 +284,7 @@ pub struct IconButton {
     hover_style: Option<UiStyle>,
     click_style: Option<UiStyle>,
     id:usize,
+    is_drag:bool,
 }
 
 impl IconButton {
@@ -307,6 +308,7 @@ impl IconButton {
             hover_style: None,
             click_style: None,
             id:0,
+            is_drag:false,
         }
     }
     
@@ -327,250 +329,285 @@ impl IconButton {
         self.click_style = Some(*style);
         self
     }
+    fn framd_taplate(&self, ui: &mut egui::Ui)->Response{
+        // 이미지 버튼 처리
+        let mut button = egui::ImageButton::new(
+            egui::load::SizedTexture::new(self.texture.id(), self.size)
+        ).frame(self.style == ButtonStyle::Framed);
+        
+        if let Some(tint) = self.tint {
+            button = button.tint(tint);
+        }
+        
+        ui.add(button)
+    }
+    fn explorer_taplate(&self, ui: &mut egui::Ui)->Response{
+        let text = match &self.tooltip {
+            Some(text) => text.as_str(),
+            None => "No tooltip"
+        };
+        
+        let (rect, response) = ui.allocate_at_least(self.size, egui::Sense::click());
+        
+        // 아이콘 그리기
+        let icon_pos = egui::pos2(
+            rect.center().x - (self.size.x * 0.5),
+            rect.center().y - (self.size.y * 0.5),
+        );
+        ui.painter().image(
+            self.texture.id(),
+            egui::Rect::from_min_size(icon_pos, self.size),
+            egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
+            egui::Color32::WHITE,
+        );
+        
+        // 텍스트 처리
+        // 텍스트 처리
+        let max_width = 80.0;  // 최대 너비 제한
+
+        // 먼저 최대 너비로 텍스트 레이아웃 생성
+        let text_galley = ui.painter().layout(
+            text.to_string(),
+            egui::FontId::proportional(10.0),
+            egui::Color32::WHITE,
+            max_width
+        );
+
+        // 행 수 확인 및 제한
+        let display_text = if text_galley.rows.len() > 2 {
+            // 첫 두 줄의 텍스트 추출을 시도
+            // Row 구조체의 public 메서드들만 사용
+            
+            // 대안: 전체 텍스트를 2줄 높이에 맞게 자르기
+            let font_height = 10.0; // 대략적인 행 높이
+            let display_galley = ui.painter().layout(
+                text.to_string(),
+                egui::FontId::proportional(10.0),
+                egui::Color32::WHITE,
+                max_width
+            );
+            
+            // 2줄까지만 표시
+            if display_galley.rows.len() > 2 {
+                let result = String::new();
+                let mut chars_added = 0;
+                
+                // 첫 2줄에 해당하는 글자 수 계산
+                for (i, row) in display_galley.rows.iter().take(2).enumerate() {
+                    // Row에서 직접 텍스트를 추출할 수 없으므로
+                    // 글자 위치를 추정
+                    let row_chars = if i == 0 {
+                        // 첫 번째 줄
+                        row.glyphs.len()
+                    } else {
+                        // 두 번째 줄
+                        row.glyphs.len() + chars_added
+                    };
+                    chars_added = row_chars;
+                }
+                
+                // 추정한 글자 수만큼 원본 텍스트에서 가져오기
+                if chars_added > 0 && chars_added < text.chars().count() {
+                    let truncated: String = text.chars().take(chars_added).collect();
+                    format!("{}...", truncated)
+                } else {
+                    text.to_string()
+                }
+            } else {
+                text.to_string()
+            }
+        } else {
+            text.to_string()
+        };
+
+        // 최종 텍스트 표시
+        let final_galley = ui.painter().layout(
+            display_text,
+            egui::FontId::proportional(10.0),
+            egui::Color32::WHITE,
+            max_width
+        );
+
+        // 텍스트 위치 (중앙 정렬)
+        let text_pos = egui::pos2(
+            rect.center().x - final_galley.rect.width() / 2.0,
+            rect.center().y + (self.size.y * 0.6)
+        );
+
+        // 텍스트 그리기
+        ui.painter().galley(text_pos, final_galley, egui::Color32::WHITE);
+                        
+        if response.clicked() {
+            println!("Explorer style icon clicked: {}", text);
+        }
+        
+        response
+    }
+    fn menu_taplate(&self, ui: &mut egui::Ui)->Response{
+               // 기본 스타일 적용 (제공된 경우)
+               let mut visuals = ui.style().visuals.clone();
+               if let Some(default_style) = &self.default_style {
+                   visuals.widgets.inactive.bg_fill = default_style.background;
+                   visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1.0, default_style.text);
+                   visuals.widgets.inactive.bg_stroke = egui::Stroke::new(1.0, default_style.border);
+                   
+                   visuals.widgets.hovered.bg_fill = default_style.hover;
+                   visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1.0, default_style.text);
+                   visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, default_style.border);
+                   
+                   visuals.widgets.active.bg_fill = default_style.accent;
+                   visuals.widgets.active.fg_stroke = egui::Stroke::new(1.0, default_style.text);
+                   visuals.widgets.active.bg_stroke = egui::Stroke::new(1.0, default_style.border);
+               }
+               
+               // 호버 스타일이 제공된 경우 오버라이드
+               if let Some(hover_style) = &self.hover_style {
+                   //visuals.widgets.hovered.bg_fill = hover_style.background;
+                   visuals.widgets.hovered.bg_fill = hover_style.hover;
+                   visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1.0, hover_style.text);//default_style
+                   visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, hover_style.border);
+               }
+               
+               // 클릭 스타일이 제공된 경우 오버라이드
+               if let Some(click_style) = &self.click_style {
+                   //visuals.widgets.active.bg_fill = click_style.background;
+                   visuals.widgets.active.bg_fill = click_style.accent;
+                   visuals.widgets.active.fg_stroke = egui::Stroke::new(1.0, click_style.text);
+                   visuals.widgets.active.bg_stroke = egui::Stroke::new(1.0, click_style.border);
+               }
+               
+               let old_visuals = ui.style().visuals.clone();
+               ui.style_mut().visuals = visuals.clone();
+               
+               let button = egui::Button::new({
+               let text = match &self.tooltip {
+                   Some(text) => {
+                          //println!("{}", text);
+                           text.as_str() // 또는 &text[..]
+                   },
+                   None => {
+                           //println!("No tooltip");
+                           "No tooltip"
+                   }
+                   };
+                   let mut rich_text = egui::RichText::new(text);
+                   if self.selected {
+                       rich_text = rich_text.strong();
+                   }
+                   rich_text
+               })
+               .fill(if self.selected {
+                   self.default_style.map_or(egui::Color32::from_rgb(45, 55, 65), |s| s.selected)
+               } else {
+                   self.default_style.map_or(egui::Color32::TRANSPARENT, |s| s.background)
+               })
+               .frame(true);
+               
+               let response = ui.add_sized([ui.available_width(), 32.0], button);
+               
+               // 아이콘 그리기
+               let rect = response.rect;
+               let icon_pos = egui::pos2(
+                   rect.min.x + 10.0,
+                   rect.center().y - self.size.y / 2.0
+               );
+               
+               ui.painter().image(
+                   self.texture.id(),
+                   egui::Rect::from_min_size(icon_pos, self.size),
+                   egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
+                   self.tint.unwrap_or(egui::Color32::WHITE)
+               );
+               
+               // 선택된 항목의 왼쪽에 표시기 추가
+               if self.selected {
+                   let indicator_width = 3.0;
+                   let accent_color = self.default_style.map_or(
+                       egui::Color32::from_rgb(59, 130, 246), 
+                       |s| s.accent
+                   );
+                   
+                   let indicator_rect = egui::Rect::from_min_size(
+                       egui::pos2(rect.min.x, rect.min.y),
+                       egui::vec2(indicator_width, rect.height())
+                   );
+                   ui.painter().rect_filled(
+                       indicator_rect,
+                       0.0,
+                       accent_color
+                   );
+               }
+               
+               // 원래 스타일로 복원
+               ui.style_mut().visuals = old_visuals;
+               apply_interactive_styles(self.clone(),ui, &response);
+                   response
+               
+    }
+    fn primary_taplate(&self, ui: &mut egui::Ui)->Response{
+        // Primary 버튼 스타일도 유사하게 처리
+        let accent_color = self.default_style.map_or(
+            egui::Color32::from_rgb(37, 99, 235), 
+            |s| s.accent
+        );
+        
+        let button = egui::Button::new({
+            let text = format!("{:?}", self.icon);
+            egui::RichText::new(text).strong()
+        })
+        .fill(accent_color);
+        
+        ui.add(button)
+    }    
+    fn secondary_taplate(&self, ui: &mut egui::Ui)->Response{
+        // Secondary 버튼 스타일도 유사하게 처리
+        let bg_color = self.default_style.map_or(
+            egui::Color32::from_rgb(75, 85, 99), 
+            |s| s.selected
+        );
+        
+        let button = egui::Button::new(format!("{:?}", self.icon))
+        .fill(bg_color);
+        
+        ui.add(button)
+    }  
     
+    fn render_dragged_icon(
+        ui: &mut egui::Ui, 
+        texture_id: egui::TextureId, 
+        position: egui::Pos2, 
+        size: egui::Vec2, 
+        tint: egui::Color32
+    ) {
+        // 아이콘을 반투명하게 렌더링
+        let dragged_tint = egui::Color32::from_rgba_unmultiplied(
+            tint.r(), tint.g(), tint.b(), tint.a() / 2  // 반투명 효과
+        );
+        
+        ui.painter().image(
+            texture_id,
+            egui::Rect::from_min_size(position, size),
+            egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
+            dragged_tint
+        );
+    }
+
     pub fn show(self, ui: &mut egui::Ui) -> egui::Response {
         let mut response = match self.style {
             ButtonStyle::Plain | ButtonStyle::Framed => {
-                // 이미지 버튼 처리
-                let mut button = egui::ImageButton::new(
-                    egui::load::SizedTexture::new(self.texture.id(), self.size)
-                ).frame(self.style == ButtonStyle::Framed);
-                
-                if let Some(tint) = self.tint {
-                    button = button.tint(tint);
-                }
-                
-                ui.add(button)
+                self.framd_taplate(ui)
             },
             ButtonStyle::Explorer => {
-                let text = match &self.tooltip {
-                    Some(text) => text.as_str(),
-                    None => "No tooltip"
-                };
-                
-                let (rect, response) = ui.allocate_at_least(self.size, egui::Sense::click());
-                
-                // 아이콘 그리기
-                let icon_pos = egui::pos2(
-                    rect.center().x - (self.size.x * 0.5),
-                    rect.center().y - (self.size.y * 0.5),
-                );
-                ui.painter().image(
-                    self.texture.id(),
-                    egui::Rect::from_min_size(icon_pos, self.size),
-                    egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
-                    egui::Color32::WHITE,
-                );
-                
-                // 텍스트 처리
-                // 텍스트 처리
-                let max_width = 80.0;  // 최대 너비 제한
-
-                // 먼저 최대 너비로 텍스트 레이아웃 생성
-                let text_galley = ui.painter().layout(
-                    text.to_string(),
-                    egui::FontId::proportional(10.0),
-                    egui::Color32::WHITE,
-                    max_width
-                );
-
-                // 행 수 확인 및 제한
-                let display_text = if text_galley.rows.len() > 2 {
-                    // 첫 두 줄의 텍스트 추출을 시도
-                    // Row 구조체의 public 메서드들만 사용
-                    
-                    // 대안: 전체 텍스트를 2줄 높이에 맞게 자르기
-                    let font_height = 10.0; // 대략적인 행 높이
-                    let display_galley = ui.painter().layout(
-                        text.to_string(),
-                        egui::FontId::proportional(10.0),
-                        egui::Color32::WHITE,
-                        max_width
-                    );
-                    
-                    // 2줄까지만 표시
-                    if display_galley.rows.len() > 2 {
-                        let result = String::new();
-                        let mut chars_added = 0;
-                        
-                        // 첫 2줄에 해당하는 글자 수 계산
-                        for (i, row) in display_galley.rows.iter().take(2).enumerate() {
-                            // Row에서 직접 텍스트를 추출할 수 없으므로
-                            // 글자 위치를 추정
-                            let row_chars = if i == 0 {
-                                // 첫 번째 줄
-                                row.glyphs.len()
-                            } else {
-                                // 두 번째 줄
-                                row.glyphs.len() + chars_added
-                            };
-                            chars_added = row_chars;
-                        }
-                        
-                        // 추정한 글자 수만큼 원본 텍스트에서 가져오기
-                        if chars_added > 0 && chars_added < text.chars().count() {
-                            let truncated: String = text.chars().take(chars_added).collect();
-                            format!("{}...", truncated)
-                        } else {
-                            text.to_string()
-                        }
-                    } else {
-                        text.to_string()
-                    }
-                } else {
-                    text.to_string()
-                };
-
-                // 최종 텍스트 표시
-                let final_galley = ui.painter().layout(
-                    display_text,
-                    egui::FontId::proportional(10.0),
-                    egui::Color32::WHITE,
-                    max_width
-                );
-
-                // 텍스트 위치 (중앙 정렬)
-                let text_pos = egui::pos2(
-                    rect.center().x - final_galley.rect.width() / 2.0,
-                    rect.center().y + (self.size.y * 0.6)
-                );
-
-                // 텍스트 그리기
-                ui.painter().galley(text_pos, final_galley, egui::Color32::WHITE);
-                                
-                if response.clicked() {
-                    println!("Explorer style icon clicked: {}", text);
-                }
-                
-                response
+                self.explorer_taplate(ui)
             }
             ButtonStyle::Menu => {
-                // 기본 스타일 적용 (제공된 경우)
-                let mut visuals = ui.style().visuals.clone();
-                if let Some(default_style) = &self.default_style {
-                    visuals.widgets.inactive.bg_fill = default_style.background;
-                    visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1.0, default_style.text);
-                    visuals.widgets.inactive.bg_stroke = egui::Stroke::new(1.0, default_style.border);
-                    
-                    visuals.widgets.hovered.bg_fill = default_style.hover;
-                    visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1.0, default_style.text);
-                    visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, default_style.border);
-                    
-                    visuals.widgets.active.bg_fill = default_style.accent;
-                    visuals.widgets.active.fg_stroke = egui::Stroke::new(1.0, default_style.text);
-                    visuals.widgets.active.bg_stroke = egui::Stroke::new(1.0, default_style.border);
-                }
-                
-                // 호버 스타일이 제공된 경우 오버라이드
-                if let Some(hover_style) = &self.hover_style {
-                    //visuals.widgets.hovered.bg_fill = hover_style.background;
-                    visuals.widgets.hovered.bg_fill = hover_style.hover;
-                    visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1.0, hover_style.text);//default_style
-                    visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, hover_style.border);
-                }
-                
-                // 클릭 스타일이 제공된 경우 오버라이드
-                if let Some(click_style) = &self.click_style {
-                    //visuals.widgets.active.bg_fill = click_style.background;
-                    visuals.widgets.active.bg_fill = click_style.accent;
-                    visuals.widgets.active.fg_stroke = egui::Stroke::new(1.0, click_style.text);
-                    visuals.widgets.active.bg_stroke = egui::Stroke::new(1.0, click_style.border);
-                }
-                
-                let old_visuals = ui.style().visuals.clone();
-                ui.style_mut().visuals = visuals.clone();
-                
-                let button = egui::Button::new({
-                let text = match &self.tooltip {
-                    Some(text) => {
-                           //println!("{}", text);
-                            text.as_str() // 또는 &text[..]
-                    },
-                    None => {
-                            //println!("No tooltip");
-                            "No tooltip"
-                    }
-                    };
-                    let mut rich_text = egui::RichText::new(text);
-                    if self.selected {
-                        rich_text = rich_text.strong();
-                    }
-                    rich_text
-                })
-                .fill(if self.selected {
-                    self.default_style.map_or(egui::Color32::from_rgb(45, 55, 65), |s| s.selected)
-                } else {
-                    self.default_style.map_or(egui::Color32::TRANSPARENT, |s| s.background)
-                })
-                .frame(true);
-                
-                let response = ui.add_sized([ui.available_width(), 32.0], button);
-                
-                // 아이콘 그리기
-                let rect = response.rect;
-                let icon_pos = egui::pos2(
-                    rect.min.x + 10.0,
-                    rect.center().y - self.size.y / 2.0
-                );
-                
-                ui.painter().image(
-                    self.texture.id(),
-                    egui::Rect::from_min_size(icon_pos, self.size),
-                    egui::Rect::from_min_max(egui::pos2(0.0, 0.0), egui::pos2(1.0, 1.0)),
-                    self.tint.unwrap_or(egui::Color32::WHITE)
-                );
-                
-                // 선택된 항목의 왼쪽에 표시기 추가
-                if self.selected {
-                    let indicator_width = 3.0;
-                    let accent_color = self.default_style.map_or(
-                        egui::Color32::from_rgb(59, 130, 246), 
-                        |s| s.accent
-                    );
-                    
-                    let indicator_rect = egui::Rect::from_min_size(
-                        egui::pos2(rect.min.x, rect.min.y),
-                        egui::vec2(indicator_width, rect.height())
-                    );
-                    ui.painter().rect_filled(
-                        indicator_rect,
-                        0.0,
-                        accent_color
-                    );
-                }
-                
-                // 원래 스타일로 복원
-                ui.style_mut().visuals = old_visuals;
-                apply_interactive_styles(self.clone(),ui, &response);
-                    response
-                
+                self.menu_taplate(ui)
             },
             ButtonStyle::Primary => {
-                // Primary 버튼 스타일도 유사하게 처리
-                let accent_color = self.default_style.map_or(
-                    egui::Color32::from_rgb(37, 99, 235), 
-                    |s| s.accent
-                );
-                
-                let button = egui::Button::new({
-                    let text = format!("{:?}", self.icon);
-                    egui::RichText::new(text).strong()
-                })
-                .fill(accent_color);
-                
-                ui.add(button)
+                self.primary_taplate(ui)
             },
             ButtonStyle::Secondary => {
-                // Secondary 버튼 스타일도 유사하게 처리
-                let bg_color = self.default_style.map_or(
-                    egui::Color32::from_rgb(75, 85, 99), 
-                    |s| s.selected
-                );
-                
-                let button = egui::Button::new(format!("{:?}", self.icon))
-                .fill(bg_color);
-                
-                ui.add(button)
+                self.secondary_taplate(ui)
             },
         };
         let input=self.clone();
