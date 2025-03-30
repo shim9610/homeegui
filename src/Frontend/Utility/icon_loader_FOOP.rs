@@ -1,4 +1,5 @@
 use Rusty_egui::egui::{self, Response};
+use Rusty_egui::egui::{Color32,  Stroke, TextureHandle, Ui, Vec2};
 use Rusty_egui::egui::style::Visuals;
 use usvg;
 use resvg;
@@ -9,6 +10,7 @@ use crate::Frontend::Utility::ui_styles::UiStyle;
 use crate::Frontend::Utility::area_slicer::FileVec;
 use std::rc::Rc;
 use std::cell::RefCell;
+use std::sync::LazyLock;
 
 
 
@@ -87,8 +89,8 @@ const question : &[u8]= include_bytes!("icon/question.svg");
 const bell2 : &[u8]= include_bytes!("icon/bell2.svg");
 const file2 : &[u8]= include_bytes!("icon/file2.svg");
 const docker : &[u8]= include_bytes!("icon/docker.svg");
-static defualt_style=ConstDummy::new();
-static default_button=StyleTemplate::new(defualt_style);
+static DEFAULT_STYLE: LazyLock<ConstDummy> = LazyLock::new(|| {ConstDummy::new(Icon::FILE,ButtonStyle::Explorer)});
+//static DEFAULT_BUTTON=LazyLock<StyleTemplate>=LazyLock::new(||{StyleTemplate::new()});
 impl Icon {
     pub fn data(&self) -> &'static [u8] {
         match self {
@@ -129,7 +131,33 @@ impl Icon {
         }
     }
 }
-
+/// 예시: 버튼 스타일
+#[derive(Debug, Clone)]
+pub struct ButtonStruct {
+    pub background: Color32,
+    pub text: Color32,
+    pub border: Color32,
+    pub hover: Color32,
+    pub accent: Color32,
+}
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ButtonStyle {
+    Plain,     // 프레임 없음
+    Framed,    // 프레임 있음
+    Menu,      // 메뉴 항목 스타일
+    Primary,   // 주요 액션 버튼
+    Secondary, // 보조 액션 버튼
+    Explorer,
+    // 필요한 다른 스타일들...
+}
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum ButtonStte {
+    Selected,     // 선택됨
+    Idle,    // 활성화 대기
+    Deactivate,      // 비활성화
+    Dragging,   // 드래그 중
+    // 필요한 다른 스타일들...
+}
 
 fn apply_interactive_styles(
     cpdata:IconButton,ui: &mut egui::Ui, response: &egui::Response
@@ -260,91 +288,128 @@ impl IconLoader {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-pub enum ButtonStyle {
-    Plain,     // 프레임 없음
-    Framed,    // 프레임 있음
-    Menu,      // 메뉴 항목 스타일
-    Primary,   // 주요 액션 버튼
-    Secondary, // 보조 액션 버튼
-    Explorer,
-    // 필요한 다른 스타일들...
-}
-trait IconButtonStyle{
-    fn new()->Self where Self : Sized;
-    fn default_style_get(&mut self)->&mut Option<UiStyle>;
-    fn hover_style_get(&mut self)->&mut Option<UiStyle>;
-    fn click_style_get(&mut self)->&mut Option<UiStyle>;
-    fn selected_style_get(&mut self)->&mut Option<UiStyle>;
-    fn drag_style_get(&mut self)->&mut Option<UiStyle>;
-    fn style_get(&mut self)->(&mut Option<UiStyle>,&mut Option<UiStyle>,&mut Option<UiStyle>,&mut Option<UiStyle>,&mut Option<UiStyle>);
-    //fn style_template_get(&mut self)->&mut StyleTemplate;
-    //fn set_style(&mut self) -> Self{
-    //    let calculator=self.style_template_get(&mut self);
-    //    calculator.set_style(&mut self)
-    //}
-
-}
-struct StyleTemplate<'a>{
-    default_style: UiStyle,
-    hover_style: UiStyle,
-    click_style: UiStyle,
-    selected_style: UiStyle,
-    drag_style : UiStyle,
-    setter_default_style: &'a mut Option<UiStyle>,
-    setter_hover_style: &'a mut Option<UiStyle>,
-    setter_click_style: &'a mut Option<UiStyle>,
-    setter_selected_style: &'a mut Option<UiStyle>,
-    setter_drag_style : &'a mut Option<UiStyle>,
-}
-impl<'a>StyleTemplate<'a>{
-    fn new(selfo: &'a mut dyn IconButtonStyle)-> Self{
 
 
-        let (A,B,C,D,E)=selfo.style_get();
-        Self{
-        default_style:UiStyle::deep_navy(1),
-        hover_style: UiStyle::deep_navy(1),
-        click_style: UiStyle::deep_navy(1),
-        selected_style:UiStyle::bright_blue(),
-        drag_style : UiStyle::deep_navy(1),
-        setter_default_style: A,
-        setter_hover_style: B,
-        setter_click_style: C,
-        setter_selected_style: D,
-        setter_drag_style : E,
-        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+trait IconButtonStyle:Sized{
+    fn new(icon: Icon, button_style: ButtonStyle)->Self where Self : Sized;
+    fn button_style_get(self)->Self where Self : Sized;
+    fn style_split_get(self)->( Option<UiStyle>, Option<UiStyle>, Option<UiStyle>, Option<UiStyle>, Option<UiStyle>);
+    fn with_style(self,input:ButtonStyle)->Self where Self: Sized;
+    fn with_default_style(self,input:&UiStyle)->Self where Self: Sized;
+    fn with_hover_style(self,input:&UiStyle)->Self where Self: Sized;
+    fn with_click_style(self,input:&UiStyle)->Self where Self: Sized;
+    fn with_selected_style(self,input:&UiStyle)->Self where Self: Sized;
+    fn with_drag_style(self,input:&UiStyle)->Self where Self: Sized;
+    fn with_tooltip(self,input:&String)->Self where Self: Sized;
+    fn with_size(self,input:&Vec2)->Self where Self: Sized;
+    fn with_id(self,input:usize)->Self where Self: Sized;
+    fn with_is_drag(self,input:bool)->Self where Self: Sized;
+    fn with_selected(self,input:bool)->Self where Self: Sized;
+    fn with_tint(self,input:egui::Color32)->Self where Self: Sized;
+}
+trait RanderTemplateWrapper<T: IconButtonStyle>: Clone {//버튼 탬플릿 정의 구조체 디폴트 함수를 젇의하기 위해 IconButtonStyle트레잇을 사용함. 공통되는 설정은 IconButtonStyle인스턴스에서 설정하고, 버튼별로 다른 설정은 RanderTemplateWrapper 인스턴스에 추가 매서드를 만드는 방식으로 구현
+    fn new (ctx: &egui::Context, icon: Icon, button_style: Option<ButtonStyle>)->Self where Self: Sized;
+    fn style_get(&mut self)->( Option<UiStyle>, Option<UiStyle>, Option<UiStyle>, Option<UiStyle>, Option<UiStyle>){
+        
+        self.clone().button_coltroll().style_split_get()
     }
-    fn set_style(&mut self){
-        if let  Some(dafault)=self.setter_default_style.clone(){
-            self.default_style=dafault.clone();
-        }else{
-            *self.setter_default_style=Some(self.default_style.clone());
-        }
-        if let  Some(hover)=self.setter_hover_style.clone(){
-            self.hover_style=hover.clone();
-        }else{
-            *self.setter_hover_style=Some(self.hover_style.clone());
-        }
-        if let  Some(click)=self.setter_click_style.clone(){
-            self.click_style=click.clone();
-        }else{
-            *self.setter_click_style=Some(self.click_style.clone());
-        }
-        if let  Some(selected)=self.setter_selected_style.clone(){
-            self.selected_style=selected.clone();
-        }else{
-            *self.setter_selected_style=Some(self.selected_style.clone());
-        }
-        if let  Some(drag)=self.setter_drag_style.clone(){
-            self.drag_style=drag.clone();
-        }else{
-            *self.setter_drag_style=Some(self.drag_style.clone());
-        }
+    fn button_coltroll(self)->T;
+    fn set_coltrol(&mut self,input:T);
+    fn with_style(&mut self,input:ButtonStyle){
+        let data = self.clone();
+        let result=data.button_coltroll().with_style(input);
+        self.set_coltrol(result);
     }
+    fn with_default_style(&mut self,input:&UiStyle){
+        let data = self.clone();
+        let result=data.button_coltroll().with_default_style(input);
+        self.set_coltrol(result);
+    }
+    fn with_hover_style(&mut self,input:&UiStyle){
+        let data = self.clone();
+        let result=data.button_coltroll().with_hover_style(input);
+        self.set_coltrol(result);
+    }
+    fn with_click_style(&mut self,input:&UiStyle){
+        let data = self.clone();
+        let result=data.button_coltroll().with_click_style(input);
+        self.set_coltrol(result);
+    }
+    fn with_selected_style(&mut self,input:&UiStyle){
+        let data = self.clone();
+        let result=data.button_coltroll().with_selected_style(input);
+        self.set_coltrol(result);
+    }
+    fn with_drag_style(&mut self,input:&UiStyle){
+        let data = self.clone();
+        let result=data.button_coltroll().with_drag_style(input);
+        self.set_coltrol(result);
+    }
+    fn with_tooltip(&mut self,input:&String){
+        let data = self.clone();
+        let result=data.button_coltroll().with_tooltip(input);
+        self.set_coltrol(result);
+    }
+    fn with_size(&mut self,input:&Vec2){
+        let data = self.clone();
+        let result=data.button_coltroll().with_size(input);
+        self.set_coltrol(result);
+    }
+    fn with_id(&mut self,input:usize){
+        let data = self.clone();
+        let result=data.button_coltroll().with_id(input);
+        self.set_coltrol(result);
+    }
+    fn with_is_drag(&mut self,input:bool){
+        let data = self.clone();
+        let result=data.button_coltroll().with_is_drag(input);
+        self.set_coltrol(result);
+    }
+    fn with_selected(&mut self,input:bool){
+        let data = self.clone();
+        let result=data.button_coltroll().with_selected(input);
+        self.set_coltrol(result);
+    }
+    fn with_tint(&mut self,input:egui::Color32){
+        let data = self.clone();
+        let result=data.button_coltroll().with_tint(input);
+        self.set_coltrol(result);
+    }
+
 }
 
-struct ConstDummy{
+trait RanderTemplate<T: IconButtonStyle>{
+    fn new(size: Vec2) ->Self where Self: Sized;
+    fn new_default(default_style: Option<UiStyle>,hover_style: Option<UiStyle>,click_style: Option<UiStyle>,
+        tooltip: Option<String>,texture: Option<TextureHandle>,size: Vec2)->impl RanderTemplateWrapper<T>;
+    fn render_explorer<RanderTemplateWrapper>(&mut self,mut self_w : T,  ui: &mut Ui) -> Response {ui.button("")}
+}
+
+
+
+#[derive( Clone)]
+struct ConstDummy{// button cotroll struct for default value.
+    icon: Icon,
+    size: egui::Vec2,
+    tint: Option<egui::Color32>,
+    style: ButtonStyle,
+    selected: bool,
+    tooltip:Option<String>,
+    id:usize,
+    is_drag:bool,
     default_style: Option<UiStyle>,
     hover_style: Option<UiStyle>,
     click_style: Option<UiStyle>,
@@ -352,329 +417,137 @@ struct ConstDummy{
     drag_style : Option<UiStyle>,
 }
 impl IconButtonStyle for ConstDummy{
-    fn new()->Self{
-        Self{
-        default_style:Some(UiStyle::deep_navy(1)),
-        hover_style:Some( UiStyle::deep_navy(1)),
-        click_style:Some( UiStyle::deep_navy(1)),
-        selected_style:Some(UiStyle::bright_blue()),
-        drag_style :Some( UiStyle::deep_navy(1)),}
-    }
-
-    fn default_style_get(&mut self)->&mut Option<UiStyle>{
-        return &mut self.default_style
-    }
-    
-    fn hover_style_get(&mut self)->&mut Option<UiStyle>{
-        return &mut self.hover_style
-    }
-    fn click_style_get(&mut self)->&mut Option<UiStyle>{
-        return &mut self.click_style
-    }
-    fn selected_style_get(&mut self)->&mut Option<UiStyle>{
-        return &mut self.selected_style
-    }
-    fn drag_style_get(&mut self)->&mut Option<UiStyle>{
-        return &mut self.drag_style
-    }
-    fn style_get(&mut self)->(&mut Option<UiStyle>,&mut Option<UiStyle>,&mut Option<UiStyle>,&mut Option<UiStyle>,&mut Option<UiStyle>)
-    {
-       
-       return (&mut self.default_style, &mut self.hover_style, &mut self.click_style, &mut self.selected_style, &mut self.drag_style)
-
-    }
-
-}
-
-trait RanderTemplateWrapper{
-    fn new()->Self where Self: Sized;
-    fn default_style(self) -> Self where Self: Sized;
-
-}
-
-
-trait RanderTemplate{
-    fn new(size: Vec2) ->Self where Self: Sized;
-    fn default_style<T: RanderTemplateWrapper + 'static>(mut self_w : T, style: UiStyle) -> T {self_w}
-    fn hover_style<T: RanderTemplateWrapper + 'static>(mut self_w : T, style: UiStyle) -> T {self_w}
-    fn click_style<T: RanderTemplateWrapper + 'static>(mut self_w : T, style: UiStyle) -> T {self_w}
-    fn tooltip<T: RanderTemplateWrapper + 'static>(mut self_w : T, style: UiStyle) -> T {self_w}
-    fn texture<T: RanderTemplateWrapper + 'static>(mut self_w : T, style: UiStyle) -> T {self_w}
-    fn render_explorer<T: RanderTemplateWrapper + 'static>(mut self_w : T,  ui: &mut Ui) -> Response {ui.button("")}
-    
- 
-}
-
-#[derive(Clone)]
-pub struct ExplorerIcon{
-    pub file : IconButton
-}
-impl ExplorerIcon{
-    pub fn new(ctx:&mut Rusty_egui::egui::Context,text:String)->ExplorerIcon{
-        let data= IconButton::new(ctx, Icon::FOLDER2, ButtonStyle::Explorer)
-                .size(egui::vec2(40.0, 40.0))
-                .tooltip(text);
-        Self{
-        file:data
-        }
-    }
-}
-
-
-
-use egui::{Color32,  Stroke, TextureHandle, Ui, Vec2};
-
-/// 예시: 버튼 스타일
-#[derive(Debug, Clone)]
-pub struct ButtonStruct {
-    pub background: Color32,
-    pub text: Color32,
-    pub border: Color32,
-    pub hover: Color32,
-    pub accent: Color32,
-}
-
-
-/// 체이닝 + Explorer 템플릿 구조체(실제 그리는 로직은 없음)
-#[derive( Clone)]
-pub struct ButtonTemplate {
-    // 세 가지 스타일
-    pub default_style: Option<UiStyle>,
-    pub hover_style: Option<UiStyle>,
-    pub click_style: Option<UiStyle>,
-
-    // 예: Explorer에서 쓸만한 필드들
-    pub tooltip: Option<String>,
-    pub texture: Option<TextureHandle>,
-    pub size: Vec2,
-}
-
-impl RanderTemplate for ButtonTemplate {
-    //---------------------------------------------------
-    // 체이닝용 초기 생성자 & 스타일 설정자
-    //---------------------------------------------------
-    fn new(size: Vec2) -> Self {
-        Self {
-            default_style: None,
-            hover_style: None,
-            click_style: None,
-            tooltip: None,
-            texture: None,
-            size,
-        }
-    }
-
-    fn default_style<T: RanderTemplateWrapper + 'static>(mut self_w : T, style: UiStyle) -> T 
-    {
-        self_w.default_style = Some(style);
-        self_w
-    }
-
-    fn hover_style(&self_w:dyn RanderTemplateWrapper, style: UiStyle) -> Self {
-        self_w.hover_style = Some(style);
-        self_w
-    }
-
-    fn click_style(&self_w:dyn RanderTemplateWrapper, style: UiStyle) -> Self {
-        self_w.click_style = Some(style);
-        self_w
-    }
-
-    fn tooltip(&self_w:dyn RanderTemplateWrapper, tooltip: impl Into<String>) -> Self {
-        self_w.tooltip = Some(tooltip.into());
-        self_w
-    }
-
-    fn texture(&self_w:dyn RanderTemplateWrapper, texture: TextureHandle) -> Self {
-        self_w.texture = Some(texture);
-        self_w
-    }
-
-    //---------------------------------------------------
-    // Explorer 템플릿 (실제 렌더 함수: 내부 로직은 비워 둠)
-    //---------------------------------------------------
-    fn render_explorer(&self_w:RanderTemplateWrapper, ui: &mut Ui) -> Response {
-        // 1) 기존 스타일 백업
-        let old_visuals = ui.style().visuals.clone();
-        let mut visuals = old_visuals.clone();
-
-        // 2) default 스타일 적용
-        if let Some(ref default) = self_w.default_style {
-            visuals.widgets.inactive.bg_fill   = default.background;
-            visuals.widgets.inactive.fg_stroke = Stroke::new(1.0, default.text);
-            visuals.widgets.inactive.bg_stroke = Stroke::new(1.0, default.border);
-
-            visuals.widgets.hovered.bg_fill    = default.hover;
-            visuals.widgets.hovered.fg_stroke  = Stroke::new(1.0, default.text);
-            visuals.widgets.hovered.bg_stroke  = Stroke::new(1.0, default.border);
-
-            visuals.widgets.active.bg_fill     = default.accent;
-            visuals.widgets.active.fg_stroke   = Stroke::new(1.0, default.text);
-            visuals.widgets.active.bg_stroke   = Stroke::new(1.0, default.border);
-        }
-
-        // 3) hover_style 오버라이드
-        if let Some(ref hover) = self_w.hover_style {
-            visuals.widgets.hovered.bg_fill    = hover.hover;
-            visuals.widgets.hovered.fg_stroke  = Stroke::new(1.0, hover.text);
-            visuals.widgets.hovered.bg_stroke  = Stroke::new(1.0, hover.border);
-        }
-
-        // 4) click_style 오버라이드
-        if let Some(ref click) = self_w.click_style {
-            visuals.widgets.active.bg_fill     = click.accent;
-            visuals.widgets.active.fg_stroke   = Stroke::new(1.0, click.text);
-            visuals.widgets.active.bg_stroke   = Stroke::new(1.0, click.border);
-        }
-
-        // 5) 새로운 Visuals 적용
-        ui.style_mut().visuals = visuals;
-
-        // ------------------------------------------------------
-        // 여기서부터 실제 그리는 로직(아이콘, 텍스트, etc.)은 비워 둠
-        // 예: allocate_at_least(), painter().image(), painter().layout() 등
-        // ------------------------------------------------------
-        // ┌─────────────────────────────────────────────────────┐
-        // │   // 실제 그리는 로직을 넣고 싶으면 여기 작성     │
-        // └─────────────────────────────────────────────────────┘
-
-        // 임시로 기본 반응(Response)만 만든다고 가정
-        let response = ui.button("Temp Explorer Button");
-
-        // 6) 스타일 복원
-        ui.style_mut().visuals = old_visuals;
-
-        // 7) Response 반환
-        response
-    }
-}
-
-pub struct MenuButton{
-    tamp:ButtonTemplate,
-    pub default_style: Option<UiStyle>,
-    pub hover_style: Option<UiStyle>,
-    pub click_style: Option<UiStyle>,
-    pub tooltip: Option<String>,
-    pub texture: Option<TextureHandle>,
-    pub size: Vec2,
-    pub visuals:Visuals,
-}
-
-impl RanderTemplateWrapper for MenuButton{
-    fn new()->Self{
-        let buf=ButtonTemplate::new(egui::vec2(64.0, 64.0));
-        Self{
-            tamp:ButtonTemplate::new(egui::vec2(64.0, 64.0)),
-            default_style:buf.default_style,
-            hover_style : buf.hover_style,
-            click_style: buf.click_style,
-            tooltip:buf.tooltip,
-            texture:buf.texture,
-            size:buf.size,
-            visuals:Visuals::default(),
-        }
-    }
-    fn default_style(mut self) -> Self {
-        if let Some(nstyle)= self.default_style{
-            
-            self.visuals.widgets.inactive.bg_fill = nstyle.background;
-            self.visuals.widgets.inactive.fg_stroke = egui::Stroke::new(1.0, nstyle.text);
-            self.visuals.widgets.inactive.bg_stroke = egui::Stroke::new(1.0, nstyle.border);
-            
-            self.visuals.widgets.hovered.bg_fill = nstyle.hover;
-            self.visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1.0, nstyle.text);
-            self.visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, nstyle.border);
-          
-            self.visuals.widgets.active.bg_fill = nstyle.accent;
-            self.visuals.widgets.active.fg_stroke = egui::Stroke::new(1.0,nstyle.text);
-            self.visuals.widgets.active.bg_stroke = egui::Stroke::new(1.0, nstyle.border);
-            let style=nstyle;
-        
-        self.default_style = Some(style,);
-        };
-        self
-    
-    }
-        
-    
-
-}
-impl MenuButton{
-    pub fn hover_style(mut self) -> Self {
-        if let Some(nstyle)=self.hover_style {
-           self.visuals.widgets.hovered.bg_fill = nstyle.background;
-           self.visuals.widgets.hovered.bg_fill = nstyle.hover;
-           self.visuals.widgets.hovered.fg_stroke = egui::Stroke::new(1.0, nstyle.text);//default_style
-           self.visuals.widgets.hovered.bg_stroke = egui::Stroke::new(1.0, nstyle.border);
-           let style = nstyle;
-           self.hover_style = Some(style);
-        };
-
-        self
-    }
-
-    pub fn click_style(mut self) -> Self {
-        let style={
-            //visuals.widgets.active.bg_fill = click_style.background;
-          //  visuals.widgets.active.bg_fill = click_style.accent;
-          //  visuals.widgets.active.fg_stroke = egui::Stroke::new(1.0, click_style.text);
-          //  visuals.widgets.active.bg_stroke = egui::Stroke::new(1.0, click_style.border);
-        };
-        self.click_style = Some(style);
-        self
-    }
-
-}
-
-
-
-
-
-
-#[derive(Clone)]
-pub struct IconButton {
-    icon: Icon,
-    texture: egui::TextureHandle,
-    style: ButtonStyle,
-    size: egui::Vec2,
-    tint: Option<egui::Color32>,
-    selected: bool,
-    tooltip: Option<String>,
-    // 상태별 스타일 추가
-    default_style: Option<UiStyle>,
-    hover_style: Option<UiStyle>,
-    click_style: Option<UiStyle>,
-    id:usize,
-    is_drag:bool,
-}
-
-impl IconButton {
-    pub fn new(ctx: &egui::Context, icon: Icon, button_style: ButtonStyle) -> Self {
+    fn new(icon: Icon, button_style: ButtonStyle)->Self{
         let size = match button_style {
             ButtonStyle::Menu => egui::vec2(16.0, 16.0),
             _ => egui::vec2(20.0, 20.0),
         };
-        
-        let texture = load_svg_icon(ctx, icon.data());
-        
-        Self {
-            icon,
-            texture,
-            style: button_style,
-            size,
-            tint: None,
-            selected: false,
-            tooltip: None,
-            default_style: None,
-            hover_style: None,
-            click_style: None,
-            id:0,
-            is_drag:false,
+        Self{
+        icon,
+        style:button_style,
+        size,
+        tint: None,
+        selected: false,
+        tooltip: None,
+        id:0,
+        is_drag:false,
+        default_style:Some(UiStyle::deep_navy(1)),
+        hover_style:Some( UiStyle::deep_navy(1)),
+        click_style:Some( UiStyle::deep_navy(1)),
+        selected_style:Some(UiStyle::bright_blue()),
+        drag_style :Some( UiStyle::deep_navy(1)),
         }
     }
-    
-    // 기존 메서드들...
-    
-    // 상태별 스타일 설정 메서드 추가
+    fn button_style_get(self)->Self{
+        self
+    }
+    fn style_split_get(self)->( Option<UiStyle>, Option<UiStyle>, Option<UiStyle>, Option<UiStyle>, Option<UiStyle>)
+    {
+       return ( self.default_style.clone(),  self.hover_style.clone(),  self.click_style.clone(),  self.selected_style.clone(),  self.drag_style.clone())
+    }
+    fn with_style(mut self,input:ButtonStyle)->Self{
+        self.style=input;
+        self
+    }
+    fn with_default_style(mut self,input:&UiStyle)->Self {
+        self.default_style=Some(*input);
+        return self
+    }
+    fn with_hover_style(mut self,input:&UiStyle)->Self{
+        self.hover_style=Some(*input);
+        return self
+    }
+    fn with_click_style(mut self,input:&UiStyle)->Self{
+        self.click_style=Some(*input);
+        return self
+    }
+    fn with_selected_style(mut self,input:&UiStyle)->Self{
+        self.selected_style=Some(*input);
+        return self
+    }
+    fn with_drag_style(mut self,input:&UiStyle)->Self{
+        self.drag_style=Some(*input);
+        return self
+    }
+    fn with_tooltip(mut self,input:&String)->Self{
+        self.tooltip=Some(input.clone());
+        return self
+    }
+    fn with_size(mut self,input:&Vec2)->Self{
+        self.size=*input;
+        return self
+    }
+    fn with_id(mut self,input:usize)->Self{
+        self.id=input;
+        return self
+    }
+    fn with_is_drag(mut self,input:bool)->Self{
+        self.is_drag=input;
+        return self
+    }
+    fn with_selected(mut self,input:bool)->Self{
+        self.selected=input;
+        return self
+    }
+    fn with_tint(mut self,input:egui::Color32)->Self{
+        self.tint=Some(input);
+        return self
+    }
 }
 
+//macro_rules! impl_with_methods {
+//    ($STRUCT:ty, $($FIELD:ident,$FIELD_TYPE:ty),*)=>{
+//        impl $STRUCT{
+//            $(
+//                pub fn with_$FIELD(mut self, value:$FIELD_TYPE) ->Self{
+//                    self.$FIELD=value;
+//                    self
+//                }
+//            )*
+//        }
+//    }
+//}
+//macro_rules! impl_with_option_methods {
+//    ($STRUCT:ty, $($FIELD:ident,$FIELD_TYPE:ty),*)=>{
+//        impl $STRUCT{
+//            $(
+//                pub fn with_$FIELD(mut self, value:$FIELD_TYPE) ->Self{
+//                    self.$FIELD=Some(*value);
+//                    self
+//                }
+//            )*
+//        }
+//    }
+//}
+
+#[derive( Clone)]
+pub struct Sample{
+    pub default_button_style:ConstDummy,
+    pub texture: Option<TextureHandle>,
+
+}
+impl RanderTemplateWrapper <ConstDummy> for Sample{
+    fn new(ctx: &egui::Context, icon: Icon, input_button_style: Option<ButtonStyle>)->Self{
+    let texture: Option<TextureHandle> = Some(load_svg_icon(ctx, icon.data()));
+    if let Some(buttonstyle)=input_button_style{
+        let input_st=DEFAULT_STYLE.clone().with_style(buttonstyle);
+        Self {
+            default_button_style: input_st,
+            texture,
+        }
+    }else{
+        let input_st= DEFAULT_STYLE.clone();
+        Self {
+            default_button_style: input_st,
+            texture,
+        }
+    }
+}
+    fn button_coltroll(self)-> ConstDummy{
+        self.default_button_style
+    }
+    fn set_coltrol(&mut self,input:ConstDummy){
+        self.default_button_style = input;
+    }
+
+}
