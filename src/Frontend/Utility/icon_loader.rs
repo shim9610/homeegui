@@ -570,8 +570,7 @@ impl IconButton {
         .fill(bg_color);
         
         ui.add(button)
-    }  
-    
+    }      
     fn render_dragged_icon(
         ui: &mut egui::Ui, 
         texture_id: egui::TextureId, 
