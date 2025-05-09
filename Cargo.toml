@@ -1,12 +1,8 @@
-[package]
-name = "homeegui"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-Rusty_egui = {git = "ssh://git@github.com/shim9610/Rusty_egui.git", branch = "main", package = "Rusty_egui" }
-env_logger = "0.11.6"
-image = "0.25.5"
-resvg = "0.45.0"
-tiny-skia = "0.11.4"
-usvg = "0.45.0"
+[workspace]
+resolver = "2"  
+members   = [
+    "crates/core",
+    "crates/renderer",
+    "crates/plugin-egui",
+    "crates/demo-app",
+]
