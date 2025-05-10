@@ -1,0 +1,14 @@
+[package]
+name    = "app"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+core      = { path = "../core" }
+renderer  = { path = "../renderer" }
+plugin-egui  = { path = "../plugin-egui" }
+
+
+[[bin]]
+name = "demo-app"
+path = "src/main.rs"

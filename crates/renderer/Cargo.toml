@@ -1,0 +1,9 @@
+[package]
+name    = "renderer"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+softbuffer = "0.4.6"
+wgpu = "25.0.0"
+winit = "0.30.10"

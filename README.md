@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 
 # learning project Rust egui 파일 관리자 프로젝트 유틸리티 모듈 구조
 
@@ -189,3 +190,6 @@ dialog_manager.show_confirm_dialog(
     }
 );
 ```
+=======
+다시 처음부터
+>>>>>>> 446d0a21c21fd12d206bbc7a32e183478810ad41
