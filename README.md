@@ -1,5 +1,5 @@
 
-# Rust egui 파일 관리자 프로젝트 유틸리티 모듈 구조
+# learning project Rust egui 파일 관리자 프로젝트 유틸리티 모듈 구조
 
 ## 1. 키보드/마우스 이벤트 관리 클래스
 
